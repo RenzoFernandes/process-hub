@@ -7,5 +7,6 @@ const processController = new ProcessController();
 
 processRoutes.post("/", processController.create);
 processRoutes.get("/", processController.list);
+processRoutes.get("/tree", processController.tree);
 
 export { processRoutes };
