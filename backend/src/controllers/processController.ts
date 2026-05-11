@@ -110,8 +110,18 @@ export class ProcessController {
   async update(req: Request, res: Response) {
     try {
       const id = String(req.params.id);
-      const { name, description, status, priority, areaId, parentId } =
-        req.body;
+
+      const {
+        name,
+        description,
+        status,
+        priority,
+        tools,
+        responsibles,
+        documentation,
+        areaId,
+        parentId,
+      } = req.body;
 
       const process = await prisma.process.update({
         where: { id },
@@ -120,6 +130,9 @@ export class ProcessController {
           description,
           status,
           priority,
+          tools,
+          responsibles,
+          documentation,
           areaId,
           parentId,
         },
