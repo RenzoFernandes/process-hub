@@ -21,4 +21,8 @@ export interface ProcessNode {
   area: Area;
 
   children: ProcessNode[];
+
+  tools?: string;
+  responsibles?: string;
+  documentation?: string;
 }

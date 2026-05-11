@@ -4,8 +4,17 @@ import { prisma } from "../lib/prisma";
 export class ProcessController {
   async create(req: Request, res: Response) {
     try {
-      const { name, description, status, priority, areaId, parentId } =
-        req.body;
+      const {
+        name,
+        description,
+        status,
+        priority,
+        tools,
+        responsibles,
+        documentation,
+        areaId,
+        parentId,
+      } = req.body;
 
       const process = await prisma.process.create({
         data: {
@@ -13,6 +22,9 @@ export class ProcessController {
           description,
           status,
           priority,
+          tools,
+          responsibles,
+          documentation,
           areaId,
           parentId,
         },

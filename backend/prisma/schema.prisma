@@ -19,21 +19,25 @@ model Area {
 }
 
 model Process {
-  id          String     @id @default(uuid())
-  name        String
-  description String?
+  id            String     @id @default(uuid())
+  name          String
+  description   String?
 
-  status      String?
-  priority    String?
+  status        String?
+  priority      String?
 
-  areaId      String
-  area        Area       @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  tools         String?
+  responsibles  String?
+  documentation String?
 
-  parentId    String?
-  parent      Process?   @relation("ProcessHierarchy", fields: [parentId], references: [id])
+  areaId        String
+  area          Area       @relation(fields: [areaId], references: [id], onDelete: Cascade)
 
-  children    Process[]  @relation("ProcessHierarchy")
+  parentId      String?
+  parent        Process?   @relation("ProcessHierarchy", fields: [parentId], references: [id])
 
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  children      Process[]  @relation("ProcessHierarchy")
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 }

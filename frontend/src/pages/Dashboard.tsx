@@ -4,7 +4,7 @@ import type { ProcessNode } from "../types/process";
 import { ProcessFlow } from "../components/ProcessFlow";
 
 export function Dashboard() {
-  const [, setProcesses] = useState<ProcessNode[]>([]);
+  const [processes, setProcesses] = useState<ProcessNode[]>([]);
 
   useEffect(() => {
     async function loadProcesses() {
@@ -23,7 +23,7 @@ export function Dashboard() {
     <div className="min-h-screen bg-slate-950 text-white p-8">
       <h1 className="text-3xl font-bold mb-8">ProcessHub</h1>
 
-      <ProcessFlow />
+      <ProcessFlow processes={processes} />
     </div>
   );
 }
