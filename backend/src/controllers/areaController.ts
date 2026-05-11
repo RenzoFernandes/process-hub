@@ -36,4 +36,41 @@ export class AreaController {
       });
     }
   }
+
+  async update(req: Request, res: Response) {
+    try {
+      const id = String(req.params.id);
+      const { name, description } = req.body;
+
+      const area = await prisma.area.update({
+        where: { id },
+        data: {
+          name,
+          description,
+        },
+      });
+
+      return res.json(area);
+    } catch (error) {
+      return res.status(500).json({
+        error: "Error updating area",
+      });
+    }
+  }
+
+  async delete(req: Request, res: Response) {
+    try {
+      const id = String(req.params.id);
+
+      await prisma.area.delete({
+        where: { id },
+      });
+
+      return res.status(204).send();
+    } catch (error) {
+      return res.status(500).json({
+        error: "Error deleting area",
+      });
+    }
+  }
 }
