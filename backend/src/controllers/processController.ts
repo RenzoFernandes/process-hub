@@ -94,4 +94,50 @@ export class ProcessController {
       });
     }
   }
+
+  async update(req: Request, res: Response) {
+    try {
+      const id = String(req.params.id);
+      const { name, description, status, priority, areaId, parentId } =
+        req.body;
+
+      const process = await prisma.process.update({
+        where: { id },
+        data: {
+          name,
+          description,
+          status,
+          priority,
+          areaId,
+          parentId,
+        },
+      });
+
+      return res.json(process);
+    } catch (error) {
+      console.error(error);
+
+      return res.status(500).json({
+        error: "Error updating process",
+      });
+    }
+  }
+
+  async delete(req: Request, res: Response) {
+    try {
+      const id = String(req.params.id);
+
+      await prisma.process.delete({
+        where: { id },
+      });
+
+      return res.status(204).send();
+    } catch (error) {
+      console.error(error);
+
+      return res.status(500).json({
+        error: "Error deleting process",
+      });
+    }
+  }
 }
