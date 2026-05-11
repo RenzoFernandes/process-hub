@@ -6,6 +6,10 @@ export class AreaController {
     try {
       const { name, description } = req.body;
 
+      if (!name?.trim()) {
+        return res.status(400).json({ error: "Informe o nome da área." });
+      }
+
       const area = await prisma.area.create({
         data: {
           name,
@@ -15,8 +19,10 @@ export class AreaController {
 
       return res.status(201).json(area);
     } catch (error) {
+      console.error(error);
+
       return res.status(500).json({
-        error: "Error creating area",
+        error: "Erro ao criar área.",
       });
     }
   }
@@ -31,8 +37,10 @@ export class AreaController {
 
       return res.json(areas);
     } catch (error) {
+      console.error(error);
+
       return res.status(500).json({
-        error: "Error fetching areas",
+        error: "Erro ao buscar áreas.",
       });
     }
   }
@@ -41,6 +49,10 @@ export class AreaController {
     try {
       const id = String(req.params.id);
       const { name, description } = req.body;
+
+      if (!name?.trim()) {
+        return res.status(400).json({ error: "Informe o nome da área." });
+      }
 
       const area = await prisma.area.update({
         where: { id },
@@ -52,8 +64,10 @@ export class AreaController {
 
       return res.json(area);
     } catch (error) {
+      console.error(error);
+
       return res.status(500).json({
-        error: "Error updating area",
+        error: "Erro ao atualizar área.",
       });
     }
   }
@@ -68,8 +82,10 @@ export class AreaController {
 
       return res.status(204).send();
     } catch (error) {
+      console.error(error);
+
       return res.status(500).json({
-        error: "Error deleting area",
+        error: "Erro ao excluir área.",
       });
     }
   }

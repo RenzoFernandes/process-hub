@@ -2,6 +2,8 @@ export interface Area {
   id: string;
   name: string;
   description?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ProcessNode {
@@ -11,6 +13,7 @@ export interface ProcessNode {
 
   status?: string;
   priority?: string;
+  executionType?: string;
 
   areaId: string;
   parentId?: string | null;

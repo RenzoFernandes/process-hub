@@ -1,45 +1,58 @@
-import {
-  LayoutDashboard,
-  FolderTree,
-  Building2,
-  Settings,
-} from "lucide-react";
+import { Boxes, Building2, FolderTree, LayoutDashboard } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 
 export function Sidebar() {
-  return (
-    <aside className="w-72 bg-slate-900/80 backdrop-blur-xl border-r border-slate-800 flex flex-col p-6">
-      <div className="mb-12">
-        <h1 className="text-3xl font-bold text-white">
-          ProcessHub
-        </h1>
+  const location = useLocation();
 
-        <p className="text-slate-400 text-sm mt-2">
-          Enterprise Process Mapping
-        </p>
+  const isActive = (path: string) => location.pathname === path;
+
+  const linkClass = (path: string) =>
+    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+      isActive(path)
+        ? "bg-sky-50 text-sky-700 ring-1 ring-sky-200"
+        : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+    }`;
+
+  return (
+    <aside className="w-full shrink-0 border-b border-slate-200 bg-white p-4 lg:min-h-screen lg:w-72 lg:border-b-0 lg:border-r lg:p-5">
+      <div className="mb-4 lg:mb-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-600 text-white">
+            <Boxes size={22} />
+          </div>
+
+          <div>
+            <h1 className="text-xl font-bold text-slate-950">ProcessHub</h1>
+            <p className="text-xs text-slate-500">Mapeamento empresarial</p>
+          </div>
+        </div>
       </div>
 
-      <nav className="flex flex-col gap-3">
-        <button className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 hover:bg-cyan-500/20 transition">
-          <LayoutDashboard size={18} />
-          Dashboard
-        </button>
+      <nav className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
+        <Link to="/" className={linkClass("/")}>
+          <LayoutDashboard className="shrink-0" size={18} />
+          <span className="whitespace-nowrap">Dashboard</span>
+        </Link>
 
-        <button className="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-300 hover:bg-slate-800 transition">
-          <FolderTree size={18} />
-          Processes
-        </button>
+        <Link to="/processos" className={linkClass("/processos")}>
+          <FolderTree className="shrink-0" size={18} />
+          <span className="whitespace-nowrap">Processos</span>
+        </Link>
 
-        <button className="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-300 hover:bg-slate-800 transition">
-          <Building2 size={18} />
-          Areas
-        </button>
+        <Link to="/areas" className={linkClass("/areas")}>
+          <Building2 className="shrink-0" size={18} />
+          <span className="whitespace-nowrap">Áreas</span>
+        </Link>
       </nav>
 
-      <div className="mt-auto">
-        <button className="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-400 hover:bg-slate-800 transition w-full">
-          <Settings size={18} />
-          Settings
-        </button>
+      <div className="mt-6 hidden rounded-lg border border-slate-200 bg-slate-50 p-4 lg:block">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Case técnico
+        </p>
+        <p className="mt-2 text-sm leading-5 text-slate-600">
+          Dashboard para visão geral, Processos para o fluxograma e Áreas para
+          gestão organizacional.
+        </p>
       </div>
     </aside>
   );
