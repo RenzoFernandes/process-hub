@@ -8,11 +8,9 @@ interface ProcessNodeCardProps {
   };
 }
 
-export function ProcessNodeCard({
-  data,
-}: ProcessNodeCardProps) {
+export function ProcessNodeCard({ data }: ProcessNodeCardProps) {
   return (
-    <div className="min-w-[260px] rounded-2xl border border-slate-700 bg-slate-900/90 backdrop-blur-xl shadow-2xl p-4">
+    <div className="min-w-[260px] rounded-2xl border border-cyan-500/10 bg-slate-900/80 backdrop-blur-2xl shadow-[0_0_40px_rgba(6,182,212,0.08)] p-4 transition-all duration-300 hover:border-cyan-400/30 hover:shadow-[0_0_60px_rgba(6,182,212,0.18)]">
       <h3 className="text-white font-semibold text-lg mb-3">
         {data.label}
       </h3>
@@ -33,18 +31,14 @@ export function ProcessNodeCard({
 
       {data.tools && (
         <p className="text-slate-400 text-sm mb-2">
-          <span className="text-slate-200 font-medium">
-            Tools:
-          </span>{" "}
+          <span className="text-slate-200 font-medium">Tools:</span>{" "}
           {data.tools}
         </p>
       )}
 
       {data.responsibles && (
         <p className="text-slate-400 text-sm">
-          <span className="text-slate-200 font-medium">
-            Responsible:
-          </span>{" "}
+          <span className="text-slate-200 font-medium">Responsible:</span>{" "}
           {data.responsibles}
         </p>
       )}
