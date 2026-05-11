@@ -92,7 +92,7 @@ export function ProcessNodeCard({ data }: ProcessNodeCardProps) {
 
   return (
     <div
-      className={`relative w-[280px] overflow-hidden rounded-lg border bg-white p-3 shadow-sm transition hover:shadow-md sm:w-[320px] sm:p-4 ${priorityStyle.card}`}
+      className={`relative w-[280px] overflow-visible rounded-lg border bg-white p-3 shadow-sm transition hover:shadow-md sm:w-[320px] sm:p-4 ${priorityStyle.card}`}
     >
       <div className={`absolute inset-x-0 top-0 h-1 ${priorityStyle.accent}`} />
 
@@ -114,7 +114,7 @@ export function ProcessNodeCard({ data }: ProcessNodeCardProps) {
             {executionLabels[data.executionType || ""] || "Processo"}
           </div>
 
-          <h3 className="break-words text-base font-semibold leading-6 text-slate-950">
+          <h3 className="break-words text-base font-semibold leading-6 text-slate-950 [overflow-wrap:anywhere]">
             {data.label}
           </h3>
         </div>
@@ -167,21 +167,27 @@ export function ProcessNodeCard({ data }: ProcessNodeCardProps) {
       {data.tools && (
         <p className="mb-2 flex gap-2 text-sm text-slate-600">
           <Wrench className="mt-0.5 shrink-0 text-sky-600" size={15} />
-          <span className="min-w-0 break-words">{data.tools}</span>
+          <span className="min-w-0 break-words [overflow-wrap:anywhere]">
+            {data.tools}
+          </span>
         </p>
       )}
 
       {data.responsibles && (
         <p className="mb-2 flex gap-2 text-sm text-slate-600">
           <UserRound className="mt-0.5 shrink-0 text-violet-600" size={15} />
-          <span className="min-w-0 break-words">{data.responsibles}</span>
+          <span className="min-w-0 break-words [overflow-wrap:anywhere]">
+            {data.responsibles}
+          </span>
         </p>
       )}
 
       {data.documentation && (
         <p className="flex gap-2 text-sm text-slate-600">
           <FileText className="mt-0.5 shrink-0 text-slate-500" size={15} />
-          <span className="min-w-0 break-words">{data.documentation}</span>
+          <span className="min-w-0 break-words [overflow-wrap:anywhere]">
+            {data.documentation}
+          </span>
         </p>
       )}
 
