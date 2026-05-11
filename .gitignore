@@ -1,19 +1,13 @@
-# dependencies
-node_modules
-
-# build
-dist
-build
-
-# environment
-.env
-
-# logs
-logs
-*.log
-
 # editor
 .vscode
+.idea
 
 # system
 .DS_Store
+Thumbs.db
+
+# logs
+*.log
+
+# environment
+.env
