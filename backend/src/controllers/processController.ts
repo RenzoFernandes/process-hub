@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { prisma } from "../lib/prisma";
+import { AuthenticatedRequest } from "../types/auth";
 
 type ProcessTreeNode = Awaited<
   ReturnType<typeof prisma.process.findMany>
@@ -20,6 +21,7 @@ async function validateProcessPayload(
     priority?: string | null;
     executionType?: string | null;
   },
+  organizationId: string,
   currentProcessId?: string,
 ) {
   if (!payload.name?.trim()) {
@@ -45,13 +47,16 @@ async function validateProcessPayload(
     return "Tipo de execucao invalido para o processo.";
   }
 
-  const areaExists = await prisma.area.findUnique({
-    where: { id: payload.areaId },
+  const areaExists = await prisma.area.findFirst({
+    where: {
+      id: payload.areaId,
+      organizationId,
+    },
     select: { id: true },
   });
 
   if (!areaExists) {
-    return "A area informada nao existe.";
+    return "A area informada nao existe neste workspace.";
   }
 
   if (!payload.parentId) {
@@ -62,16 +67,18 @@ async function validateProcessPayload(
     return "Um processo nao pode ser subprocesso dele mesmo.";
   }
 
-  const parent = await prisma.process.findUnique({
-    where: { id: payload.parentId },
+  const parent = await prisma.process.findFirst({
+    where: {
+      id: payload.parentId,
+      organizationId,
+    },
     select: { id: true, parentId: true },
   });
 
   if (!parent) {
-    return "O processo pai informado nao existe.";
+    return "O processo pai informado nao existe neste workspace.";
   }
 
-  // Ao editar, subimos pela cadeia de pais para impedir ciclos na arvore.
   let ancestorId = parent.parentId;
 
   while (ancestorId) {
@@ -79,8 +86,11 @@ async function validateProcessPayload(
       return "A alteracao criaria um ciclo na hierarquia de processos.";
     }
 
-    const ancestor = await prisma.process.findUnique({
-      where: { id: ancestorId },
+    const ancestor = await prisma.process.findFirst({
+      where: {
+        id: ancestorId,
+        organizationId,
+      },
       select: { parentId: true },
     });
 
@@ -90,8 +100,30 @@ async function validateProcessPayload(
   return null;
 }
 
+async function collectDescendantIds(
+  id: string,
+  organizationId: string,
+): Promise<string[]> {
+  const children = await prisma.process.findMany({
+    where: {
+      parentId: id,
+      organizationId,
+    },
+    select: { id: true },
+  });
+
+  const descendantIds = await Promise.all(
+    children.map((child) => collectDescendantIds(child.id, organizationId)),
+  );
+
+  return children.flatMap((child, index) => [
+    ...descendantIds[index],
+    child.id,
+  ]);
+}
+
 export class ProcessController {
-  async create(req: Request, res: Response) {
+  async create(req: AuthenticatedRequest, res: Response) {
     try {
       const {
         name,
@@ -106,14 +138,17 @@ export class ProcessController {
         parentId,
       } = req.body;
 
-      const validationError = await validateProcessPayload({
-        name,
-        areaId,
-        parentId,
-        status,
-        priority,
-        executionType,
-      });
+      const validationError = await validateProcessPayload(
+        {
+          name,
+          areaId,
+          parentId,
+          status,
+          priority,
+          executionType,
+        },
+        req.user.organizationId,
+      );
 
       if (validationError) {
         return res.status(400).json({ error: validationError });
@@ -131,6 +166,7 @@ export class ProcessController {
           documentation,
           areaId,
           parentId,
+          organizationId: req.user.organizationId,
         },
       });
 
@@ -144,9 +180,12 @@ export class ProcessController {
     }
   }
 
-  async list(req: Request, res: Response) {
+  async list(req: AuthenticatedRequest, res: Response) {
     try {
       const processes = await prisma.process.findMany({
+        where: {
+          organizationId: req.user.organizationId,
+        },
         include: {
           area: true,
           parent: true,
@@ -167,9 +206,12 @@ export class ProcessController {
     }
   }
 
-  async tree(req: Request, res: Response) {
+  async tree(req: AuthenticatedRequest, res: Response) {
     try {
       const processes = await prisma.process.findMany({
+        where: {
+          organizationId: req.user.organizationId,
+        },
         include: {
           area: true,
         },
@@ -180,7 +222,6 @@ export class ProcessController {
 
       const processMap = new Map<string, ProcessTreeNode>();
 
-      // Indexa todos os processos por id para encontrar pais em O(1).
       processes.forEach((process) => {
         processMap.set(process.id, {
           ...process,
@@ -190,7 +231,6 @@ export class ProcessController {
 
       const tree: ProcessTreeNode[] = [];
 
-      // Conecta cada processo ao seu parentId; sem parentId ele vira raiz.
       processMap.forEach((process) => {
         if (process.parentId) {
           const parent = processMap.get(process.parentId);
@@ -213,9 +253,21 @@ export class ProcessController {
     }
   }
 
-  async update(req: Request, res: Response) {
+  async update(req: AuthenticatedRequest, res: Response) {
     try {
       const id = String(req.params.id);
+
+      const existingProcess = await prisma.process.findFirst({
+        where: {
+          id,
+          organizationId: req.user.organizationId,
+        },
+        select: { id: true },
+      });
+
+      if (!existingProcess) {
+        return res.status(404).json({ error: "Processo nao encontrado." });
+      }
 
       const {
         name,
@@ -239,6 +291,7 @@ export class ProcessController {
           priority,
           executionType,
         },
+        req.user.organizationId,
         id,
       );
 
@@ -272,30 +325,32 @@ export class ProcessController {
     }
   }
 
-  private async collectDescendantIds(id: string): Promise<string[]> {
-    const children = await prisma.process.findMany({
-      where: { parentId: id },
-      select: { id: true },
-    });
-
-    const descendantIds = await Promise.all(
-      children.map((child) => this.collectDescendantIds(child.id)),
-    );
-
-    return children.flatMap((child, index) => [
-      ...descendantIds[index],
-      child.id,
-    ]);
-  }
-
-  async delete(req: Request, res: Response) {
+  async delete(req: AuthenticatedRequest, res: Response) {
     try {
       const id = String(req.params.id);
-      const descendantIds = await this.collectDescendantIds(id);
+      const process = await prisma.process.findFirst({
+        where: {
+          id,
+          organizationId: req.user.organizationId,
+        },
+        select: { id: true },
+      });
+
+      if (!process) {
+        return res.status(404).json({ error: "Processo nao encontrado." });
+      }
+
+      const descendantIds = await collectDescendantIds(
+        id,
+        req.user.organizationId,
+      );
 
       await prisma.$transaction([
         prisma.process.deleteMany({
-          where: { id: { in: descendantIds } },
+          where: {
+            id: { in: descendantIds },
+            organizationId: req.user.organizationId,
+          },
         }),
         prisma.process.delete({
           where: { id },

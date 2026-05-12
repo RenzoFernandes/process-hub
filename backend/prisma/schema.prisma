@@ -12,10 +12,15 @@ model Area {
   name        String
   description String?
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
   processes   Process[]
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([organizationId])
 }
 
 model Process {
@@ -31,6 +36,9 @@ model Process {
   responsibles  String?
   documentation String?
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
   areaId        String
   area          Area       @relation(fields: [areaId], references: [id], onDelete: Cascade)
 
@@ -44,4 +52,33 @@ model Process {
 
   @@index([areaId])
   @@index([parentId])
+  @@index([organizationId])
+}
+
+model Organization {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+
+  users     User[]
+  areas     Area[]
+  processes Process[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model User {
+  id             String       @id @default(uuid())
+  name           String
+  email          String       @unique
+  passwordHash   String
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
 }

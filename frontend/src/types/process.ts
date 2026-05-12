@@ -2,6 +2,7 @@ export interface Area {
   id: string;
   name: string;
   description?: string;
+  organizationId: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -16,6 +17,7 @@ export interface ProcessNode {
   executionType?: string;
 
   areaId: string;
+  organizationId: string;
   parentId?: string | null;
 
   createdAt: string;
