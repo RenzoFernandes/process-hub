@@ -1,32 +1,27 @@
 # ProcessHub
 
-ProcessHub é uma aplicação full-stack para mapear áreas, processos e subprocessos de uma empresa, criada para atender ao case técnico da Stage Consulting.
+ProcessHub e uma aplicacao full-stack para gestao, documentacao e navegacao de processos corporativos. A plataforma centraliza areas, processos, subprocessos, responsaveis, ferramentas, status, prioridades e documentacao em uma experiencia visual de produto SaaS.
 
-O projeto resolve um problema comum em empresas em crescimento: processos internos pouco documentados, responsáveis dispersos, ferramentas não centralizadas e dificuldade para visualizar como uma atividade se conecta a outra.
+O objetivo e substituir planilhas e documentos dispersos por um workspace operacional onde equipes conseguem entender rapidamente quem executa cada processo, quais ferramentas sao utilizadas e como a hierarquia de subprocessos esta estruturada.
 
-## Aderência ao case
+## Visao do produto
 
-| Requisito do case | Como foi atendido |
-| --- | --- |
-| Separar frontend e backend | Projeto dividido em `frontend` e `backend`, comunicando por API REST JSON. |
-| Cadastro de áreas | Tela de Áreas com criação, listagem, edição, exclusão e contagem de processos. |
-| Cadastro de processos e subprocessos | Tela de Processos com CRUD completo e vínculo hierárquico por `parentId`. |
-| Subprocessos ilimitados | Modelagem recursiva na tabela `Process`, permitindo qualquer profundidade. |
-| Ferramentas, responsáveis e documentação | Campos próprios no cadastro e visualização dos processos. |
-| Visualização clara da cadeia | Fluxograma navegável com React Flow, linhas, setas, zoom, minimapa e cores por prioridade. |
-| Status e prioridade | Dashboard e cards exibem status, prioridade e destaque visual. |
-| Banco relacional | PostgreSQL com Prisma ORM e migrations versionadas. |
-| Ambiente reproduzível | PostgreSQL executado via Docker Compose. |
-| Material de apresentação | Documento técnico em `docs/APRESENTACAO_TECNICA.md`. |
-
-## Funcionalidades
-
-- **Dashboard:** visão geral com total de áreas, processos, subprocessos, alta prioridade, status, prioridades e filtro por área.
-- **Processos:** tela principal do case, com criação, edição, exclusão, subprocessos, detalhes operacionais e fluxograma.
-- **Áreas:** gestão organizacional com CRUD de áreas e quantidade de processos por área.
-- **Fluxograma:** visualização horizontal da hierarquia, com processos raiz à esquerda e subprocessos nas colunas seguintes.
+- **Dashboard operacional:** indicadores de areas, processos, subprocessos, prioridades e status, com filtro por area.
+- **Process Explorer:** visualizacao principal dos processos em raias verticais por status, com cards horizontais navegaveis, arvore expansivel de subprocessos e drawer lateral de detalhes.
+- **Areas:** cadastro e gestao das unidades organizacionais responsaveis pelos processos.
+- **Hierarquia ilimitada:** processos e subprocessos usam uma relacao recursiva por `parentId`, permitindo qualquer profundidade.
+- **Detalhamento operacional:** cada processo pode registrar tipo de execucao, responsaveis, ferramentas, documentacao, status e prioridade.
 
 ## Tecnologias
+
+**Frontend**
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- Lucide React
+- Axios
 
 **Backend**
 
@@ -35,16 +30,6 @@ O projeto resolve um problema comum em empresas em crescimento: processos intern
 - Express
 - Prisma ORM
 - PostgreSQL
-
-**Frontend**
-
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- React Flow
-- Lucide React
-- Axios
 
 **Infraestrutura local**
 
@@ -59,9 +44,9 @@ O projeto resolve um problema comum em empresas em crescimento: processos intern
 docker compose up -d
 ```
 
-O PostgreSQL roda no container na porta `5432` e fica disponível no host pela porta `5433`.
+O PostgreSQL roda no container na porta `5432` e fica disponivel no host pela porta `5433`.
 
-### 2. Configurar variáveis do backend
+### 2. Configurar variaveis do backend
 
 Crie ou confira o arquivo `backend/.env`:
 
@@ -89,7 +74,7 @@ npm install
 npm run dev
 ```
 
-URLs padrão:
+URLs padrao:
 
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:3333`
@@ -99,15 +84,15 @@ URLs padrão:
 
 ```mermaid
 flowchart LR
-  User[Usuário] --> Frontend[React + Vite]
+  User[Usuario] --> Frontend[React + Vite]
   Frontend -->|HTTP JSON| API[Express API]
   API --> Routes[Routes]
   Routes --> Controllers[Controllers]
   Controllers --> Prisma[Prisma Client]
-  Prisma --> Postgres[(PostgreSQL em Docker)]
+  Prisma --> Postgres[(PostgreSQL)]
 ```
 
-O frontend é responsável pela experiência visual e pelo consumo da API. O backend concentra regras, endpoints REST e persistência. O Prisma faz a ponte tipada entre o código TypeScript e o PostgreSQL.
+O frontend concentra a experiencia de produto e consome a API REST. O backend valida payloads, protege a integridade da hierarquia, monta a arvore de processos e persiste os dados via Prisma.
 
 ## Modelagem principal
 
@@ -125,6 +110,7 @@ erDiagram
   Process {
     string id
     string name
+    string description
     string status
     string priority
     string executionType
@@ -136,13 +122,13 @@ erDiagram
   }
 ```
 
-O campo `parentId` é o ponto central da hierarquia. Quando ele é nulo, o registro é um processo raiz. Quando aponta para outro processo, o registro passa a ser um subprocesso.
+O campo `parentId` e a base da hierarquia. Quando e nulo, o registro e um processo raiz. Quando aponta para outro processo, o registro se torna subprocesso daquele item.
 
-Essa modelagem é chamada de lista de adjacência e permite representar subprocessos ilimitados sem criar tabelas extras para cada nível.
+Essa modelagem por lista de adjacencia permite profundidade ilimitada sem criar tabelas por nivel.
 
 ## API principal
 
-Áreas:
+Areas:
 
 - `GET /areas`
 - `POST /areas`
@@ -157,20 +143,32 @@ Processos:
 - `PUT /processes/:id`
 - `DELETE /processes/:id`
 
-O endpoint `GET /processes/tree` busca os processos no banco, monta a árvore usando `parentId` e devolve a estrutura pronta para o fluxograma.
+O endpoint `GET /processes/tree` retorna os processos ja organizados em arvore, com `children` recursivo. A tela Process Explorer consome essa estrutura diretamente para renderizar cards, subprocessos expansivos e detalhes laterais.
 
-## Decisões técnicas
+## Regras e validacoes
 
-- **Express:** simples, direto e adequado para uma API REST objetiva.
-- **Controllers separados das rotas:** deixam os endpoints organizados e facilitam manutenção.
-- **Prisma:** entrega tipagem, migrations, relações e acesso seguro ao PostgreSQL.
-- **PostgreSQL:** banco relacional adequado para áreas, processos e relacionamentos.
-- **Docker:** padroniza o banco local e reduz problemas de ambiente.
-- **React Flow:** atende ao requisito de visualização criativa e navegável da cadeia de processos.
-- **`parentId`:** permite hierarquia flexível, subprocessos ilimitados e fácil montagem da árvore.
+- Nome e area sao obrigatorios para processos.
+- Status, prioridade e tipo de execucao sao validados no backend.
+- A API impede que um processo seja pai dele mesmo.
+- A API impede ciclos na hierarquia ao editar `parentId`.
+- A exclusao de um processo tambem remove seus subprocessos descendentes.
+- A exclusao de uma area remove os processos vinculados por cascade.
 
-## Material técnico
+## Qualidade
 
-A apresentação objetiva do projeto está em:
+Comandos usados para validar o projeto:
+
+```bash
+cd frontend
+npm run lint
+npm run build
+
+cd ../backend
+npm run build
+```
+
+## Material tecnico
+
+A apresentacao tecnica do projeto esta em:
 
 [docs/APRESENTACAO_TECNICA.md](docs/APRESENTACAO_TECNICA.md)

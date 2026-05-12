@@ -32,25 +32,25 @@ export function AreaForm({ onAreaCreated }: AreaFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+      className="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 lg:mb-4 lg:p-3"
     >
-      <div className="mb-5 flex items-start justify-between gap-4">
+      <div className="mb-5 flex items-start justify-between gap-4 lg:mb-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-950">
-            Cadastrar área
+          <h2 className="text-lg font-semibold text-slate-950 lg:text-base">
+            Nova area
           </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Use áreas para organizar processos por departamento ou setor.
+          <p className="mt-1 text-sm text-slate-500 lg:text-xs">
+            Cadastre unidades responsaveis para organizar processos e equipes.
           </p>
         </div>
 
         <Building2 className="text-sky-600" size={22} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:gap-3">
         <input
           className="min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-          placeholder="Nome da área"
+          placeholder="Nome da area"
           value={name}
           onChange={(event) => setName(event.target.value)}
           required
@@ -58,15 +58,15 @@ export function AreaForm({ onAreaCreated }: AreaFormProps) {
 
         <input
           className="min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-          placeholder="Descrição"
+          placeholder="Descricao"
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
       </div>
 
-      <button className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 sm:w-auto">
+      <button className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 sm:w-auto lg:mt-3 lg:py-2">
         <Save size={17} />
-        Salvar área
+        Salvar area
       </button>
     </form>
   );

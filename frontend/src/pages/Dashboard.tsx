@@ -19,20 +19,21 @@ const allAreasId = "all";
 const statusLabels: Record<string, string> = {
   open: "Aberto",
   in_progress: "Em andamento",
-  review: "Em revisão",
+  review: "Em revisao",
   closed: "Fechado",
   active: "Ativo",
   mapped: "Mapeado",
 };
 
 const priorityLabels: Record<string, string> = {
-  critical: "Crítica",
+  critical: "Critica",
   high: "Alta",
-  medium: "Média",
+  medium: "Media",
   low: "Baixa",
 };
 
 const priorityOrder = ["critical", "high", "medium", "low"];
+const statusOrder = ["open", "in_progress", "review", "closed"];
 
 export function Dashboard() {
   const [processes, setProcesses] = useState<ProcessNode[]>([]);
@@ -84,9 +85,7 @@ export function Dashboard() {
     [effectiveSelectedAreaId, flatProcesses],
   );
 
-  const subprocessCount = visibleProcesses.filter(
-    (item) => item.parentId,
-  ).length;
+  const subprocessCount = visibleProcesses.filter((item) => item.parentId).length;
   const rootProcessCount = visibleProcesses.length - subprocessCount;
   const criticalCount = visibleProcesses.filter(
     (item) => item.priority === "critical" || item.priority === "high",
@@ -95,7 +94,7 @@ export function Dashboard() {
     (item) => item.status === "closed",
   ).length;
 
-  const statusSummary = countBy(visibleProcesses, "status", statusLabels);
+  const statusSummary = countStatusesByOrder(visibleProcesses);
   const prioritySummary = countPrioritiesByImportance(visibleProcesses);
 
   function countProcessesByArea(areaId: string) {
@@ -103,41 +102,41 @@ export function Dashboard() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-100 text-slate-950 lg:flex-row">
+    <div className="flex min-h-screen flex-col bg-[#f7f9fc] text-slate-950 lg:flex-row">
       <Sidebar />
 
-      <main className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6">
-        <section className="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <main className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:h-screen lg:overflow-hidden lg:p-3">
+        <section className="mb-6 border-b border-slate-200 pb-5 lg:mb-3 lg:pb-2">
           <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">
-            Visão geral
+            Operations overview
           </p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-950 sm:text-3xl">
-            Dashboard do mapeamento
+          <h1 className="mt-2 text-2xl font-bold text-slate-950 sm:text-3xl lg:mt-0.5 lg:text-xl">
+            Dashboard operacional
           </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            Acompanhe rapidamente o tamanho do mapa por visão geral ou por área,
-            incluindo processos, subprocessos, status e prioridades.
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 lg:mt-1 lg:text-xs lg:leading-4">
+            Monitore areas, processos, prioridades e status em uma visao unica
+            para tomada de decisao.
           </p>
         </section>
 
-        <section className="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <section className="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 lg:mb-3 lg:p-2.5">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:mb-2">
             <div>
-              <h2 className="text-lg font-semibold text-slate-950">
-                Navegação por área
+              <h2 className="text-lg font-semibold text-slate-950 lg:text-base">
+                Filtro por area
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Selecione uma área para filtrar os indicadores do dashboard.
+              <p className="mt-1 text-sm text-slate-500 lg:hidden">
+                Selecione uma area para focar os indicadores.
               </p>
             </div>
 
-            <Building2 className="text-slate-400" size={22} />
+            <Building2 className="text-slate-400" size={20} />
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 lg:gap-2">
             <AreaFilterButton
-              label="Todas as áreas"
-              description={`${flatProcesses.length} processos no mapa completo`}
+              label="Todas as areas"
+              description={`${flatProcesses.length} processos no workspace`}
               selected={effectiveSelectedAreaId === allAreasId}
               onClick={() => setSelectedAreaId(allAreasId)}
             />
@@ -162,11 +161,13 @@ export function Dashboard() {
           </div>
         </section>
 
-        <section className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4 lg:mb-3 lg:gap-2">
           <MetricCard
             icon={<Layers3 size={20} />}
             label={
-              selectedArea ? `Área selecionada: ${selectedArea.name}` : "Áreas cadastradas"
+              selectedArea
+                ? `Area selecionada: ${selectedArea.name}`
+                : "Areas cadastradas"
             }
             value={selectedArea ? 1 : areas.length}
           />
@@ -187,16 +188,16 @@ export function Dashboard() {
           />
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-3">
+        <section className="grid gap-6 xl:grid-cols-3 lg:gap-2">
           <SummaryPanel
-            title="Resumo rápido do mapa"
+            title="Resumo operacional"
             icon={<CheckCircle2 size={20} />}
             items={[
               ["Processos raiz", rootProcessCount],
               ["Subprocessos", subprocessCount],
               ["Processos fechados", closedCount],
               [
-                selectedArea ? "Área em foco" : "Áreas com processos",
+                selectedArea ? "Area em foco" : "Areas com processos",
                 selectedArea
                   ? 1
                   : countAreasWithProcesses(areas, visibleProcesses),
@@ -238,14 +239,16 @@ function AreaFilterButton({
     <button
       type="button"
       onClick={onClick}
-      className={`min-w-0 rounded-lg border px-4 py-3 text-left text-sm transition ${
+      className={`min-w-0 rounded-lg border px-4 py-3 text-left text-sm transition lg:px-2.5 lg:py-1.5 ${
         selected
           ? "border-sky-300 bg-sky-50 text-sky-800 shadow-sm"
-          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm"
       }`}
     >
       <span className="block truncate font-semibold">{label}</span>
-      <span className="mt-1 block text-xs leading-5">{description}</span>
+      <span className="mt-1 block text-xs leading-5 lg:text-[11px] lg:leading-3">
+        {description}
+      </span>
     </button>
   );
 }
@@ -258,12 +261,14 @@ interface MetricCardProps {
 
 function MetricCard({ icon, label, value }: MetricCardProps) {
   return (
-    <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-sky-700">
+    <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-sky-200 hover:shadow-md lg:p-2.5">
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-sky-700 lg:mb-1.5 lg:h-7 lg:w-7">
         {icon}
       </div>
-      <p className="text-2xl font-bold text-slate-950">{value}</p>
-      <p className="mt-1 break-words text-sm text-slate-500">{label}</p>
+      <p className="text-2xl font-bold text-slate-950 lg:text-lg">{value}</p>
+      <p className="mt-1 break-words text-sm text-slate-500 lg:text-[11px] lg:leading-3">
+        {label}
+      </p>
     </div>
   );
 }
@@ -276,26 +281,26 @@ interface SummaryPanelProps {
 
 function SummaryPanel({ title, icon, items }: SummaryPanelProps) {
   return (
-    <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-50 text-sky-700">
+    <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 lg:p-2.5">
+      <div className="mb-4 flex items-center gap-3 lg:mb-2">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-50 text-sky-700 lg:h-7 lg:w-7">
           {icon}
         </div>
-        <h2 className="text-base font-semibold text-slate-950 sm:text-lg">
+        <h2 className="text-base font-semibold text-slate-950 sm:text-lg lg:text-sm">
           {title}
         </h2>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 lg:space-y-1.5">
         {items.map(([label, value]) => (
           <div
             key={label}
-            className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"
+            className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 lg:px-2.5 lg:py-1"
           >
-            <span className="min-w-0 break-words text-sm text-slate-600">
+            <span className="min-w-0 break-words text-sm text-slate-600 lg:text-xs">
               {label}
             </span>
-            <span className="text-sm font-semibold text-slate-950">
+            <span className="text-sm font-semibold text-slate-950 lg:text-xs">
               {value}
             </span>
           </div>
@@ -312,24 +317,27 @@ function flattenProcesses(processes: ProcessNode[]): ProcessNode[] {
   ]);
 }
 
-function countBy(
-  processes: ProcessNode[],
-  key: "status" | "priority",
-  labels: Record<string, string>,
-): [string, number][] {
-  const summary = new Map<string, number>();
+function countStatusesByOrder(processes: ProcessNode[]): [string, number][] {
+  const counts = new Map<string, number>();
 
   processes.forEach((process) => {
-    const value = process[key] || "Não informado";
-    const label = labels[value] || value;
-    summary.set(label, (summary.get(label) || 0) + 1);
+    const status = process.status || "open";
+    counts.set(status, (counts.get(status) || 0) + 1);
   });
 
-  if (summary.size === 0) {
-    return [["Nenhum processo cadastrado", 0]];
-  }
+  const orderedStatuses: [string, number][] = statusOrder.map((status) => [
+    statusLabels[status],
+    counts.get(status) || 0,
+  ]);
 
-  return Array.from(summary.entries());
+  const unknownStatuses = Array.from(counts.entries())
+    .filter(([status]) => !statusOrder.includes(status))
+    .map(([status, count]): [string, number] => [
+      statusLabels[status] || status,
+      count,
+    ]);
+
+  return [...orderedStatuses, ...unknownStatuses];
 }
 
 function countPrioritiesByImportance(processes: ProcessNode[]): [string, number][] {
@@ -340,7 +348,7 @@ function countPrioritiesByImportance(processes: ProcessNode[]): [string, number]
   const counts = new Map<string, number>();
 
   processes.forEach((process) => {
-    const priority = process.priority || "Não informado";
+    const priority = process.priority || "Nao informado";
     counts.set(priority, (counts.get(priority) || 0) + 1);
   });
 

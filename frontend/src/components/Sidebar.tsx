@@ -14,16 +14,16 @@ export function Sidebar() {
     }`;
 
   return (
-    <aside className="w-full shrink-0 border-b border-slate-200 bg-white p-4 lg:min-h-screen lg:w-72 lg:border-b-0 lg:border-r lg:p-5">
-      <div className="mb-4 lg:mb-8">
+    <aside className="w-full shrink-0 border-b border-slate-200 bg-white/95 p-4 lg:min-h-screen lg:w-72 lg:border-b-0 lg:border-r lg:p-4">
+      <div className="mb-4 lg:mb-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-600 text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-950 text-white shadow-sm">
             <Boxes size={22} />
           </div>
 
-          <div>
+          <div className="min-w-0">
             <h1 className="text-xl font-bold text-slate-950">ProcessHub</h1>
-            <p className="text-xs text-slate-500">Mapeamento empresarial</p>
+            <p className="text-xs text-slate-500">Operations workspace</p>
           </div>
         </div>
       </div>
@@ -41,17 +41,17 @@ export function Sidebar() {
 
         <Link to="/areas" className={linkClass("/areas")}>
           <Building2 className="shrink-0" size={18} />
-          <span className="whitespace-nowrap">Áreas</span>
+          <span className="whitespace-nowrap">Areas</span>
         </Link>
       </nav>
 
-      <div className="mt-6 hidden rounded-lg border border-slate-200 bg-slate-50 p-4 lg:block">
+      <div className="mt-6 hidden rounded-lg border border-slate-200 bg-slate-50 p-3 lg:block">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Case técnico
+          Workspace
         </p>
-        <p className="mt-2 text-sm leading-5 text-slate-600">
-          Dashboard para visão geral, Processos para o fluxograma e Áreas para
-          gestão organizacional.
+        <p className="mt-2 text-xs leading-5 text-slate-600">
+          Centralize processos, responsaveis, areas e documentacao operacional
+          em uma unica experiencia.
         </p>
       </div>
     </aside>

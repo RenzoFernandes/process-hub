@@ -27,22 +27,22 @@ async function validateProcessPayload(
   }
 
   if (!payload.areaId) {
-    return "Selecione a área responsável pelo processo.";
+    return "Selecione a area responsavel pelo processo.";
   }
 
   if (payload.status && !allowedStatuses.includes(payload.status)) {
-    return "Status inválido para o processo.";
+    return "Status invalido para o processo.";
   }
 
   if (payload.priority && !allowedPriorities.includes(payload.priority)) {
-    return "Prioridade inválida para o processo.";
+    return "Prioridade invalida para o processo.";
   }
 
   if (
     payload.executionType &&
     !allowedExecutionTypes.includes(payload.executionType)
   ) {
-    return "Tipo de execução inválido para o processo.";
+    return "Tipo de execucao invalido para o processo.";
   }
 
   const areaExists = await prisma.area.findUnique({
@@ -51,7 +51,7 @@ async function validateProcessPayload(
   });
 
   if (!areaExists) {
-    return "A área informada não existe.";
+    return "A area informada nao existe.";
   }
 
   if (!payload.parentId) {
@@ -59,7 +59,7 @@ async function validateProcessPayload(
   }
 
   if (payload.parentId === currentProcessId) {
-    return "Um processo não pode ser subprocesso dele mesmo.";
+    return "Um processo nao pode ser subprocesso dele mesmo.";
   }
 
   const parent = await prisma.process.findUnique({
@@ -68,15 +68,15 @@ async function validateProcessPayload(
   });
 
   if (!parent) {
-    return "O processo pai informado não existe.";
+    return "O processo pai informado nao existe.";
   }
 
-  // Ao editar, subimos pela cadeia de pais para impedir ciclos na árvore.
+  // Ao editar, subimos pela cadeia de pais para impedir ciclos na arvore.
   let ancestorId = parent.parentId;
 
   while (ancestorId) {
     if (ancestorId === currentProcessId) {
-      return "A alteração criaria um ciclo na hierarquia de processos.";
+      return "A alteracao criaria um ciclo na hierarquia de processos.";
     }
 
     const ancestor = await prisma.process.findUnique({
@@ -180,7 +180,7 @@ export class ProcessController {
 
       const processMap = new Map<string, ProcessTreeNode>();
 
-      // Primeiro indexamos todos os processos por id para encontrar pais em O(1).
+      // Indexa todos os processos por id para encontrar pais em O(1).
       processes.forEach((process) => {
         processMap.set(process.id, {
           ...process,
@@ -190,7 +190,7 @@ export class ProcessController {
 
       const tree: ProcessTreeNode[] = [];
 
-      // Depois conectamos cada processo ao seu parentId; sem parentId ele vira raiz.
+      // Conecta cada processo ao seu parentId; sem parentId ele vira raiz.
       processMap.forEach((process) => {
         if (process.parentId) {
           const parent = processMap.get(process.parentId);
@@ -208,7 +208,7 @@ export class ProcessController {
       console.error(error);
 
       return res.status(500).json({
-        error: "Erro ao buscar árvore de processos.",
+        error: "Erro ao buscar arvore de processos.",
       });
     }
   }
@@ -272,13 +272,35 @@ export class ProcessController {
     }
   }
 
+  private async collectDescendantIds(id: string): Promise<string[]> {
+    const children = await prisma.process.findMany({
+      where: { parentId: id },
+      select: { id: true },
+    });
+
+    const descendantIds = await Promise.all(
+      children.map((child) => this.collectDescendantIds(child.id)),
+    );
+
+    return children.flatMap((child, index) => [
+      ...descendantIds[index],
+      child.id,
+    ]);
+  }
+
   async delete(req: Request, res: Response) {
     try {
       const id = String(req.params.id);
+      const descendantIds = await this.collectDescendantIds(id);
 
-      await prisma.process.delete({
-        where: { id },
-      });
+      await prisma.$transaction([
+        prisma.process.deleteMany({
+          where: { id: { in: descendantIds } },
+        }),
+        prisma.process.delete({
+          where: { id },
+        }),
+      ]);
 
       return res.status(204).send();
     } catch (error) {
