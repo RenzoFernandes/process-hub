@@ -5,6 +5,7 @@ import { prisma } from "../lib/prisma";
 import { AuthenticatedRequest } from "../types/auth";
 
 const saltRounds = 10;
+const demoWorkspaceId = "00000000-0000-0000-0000-000000000001";
 
 function createSlug(value: string) {
   return value
@@ -216,6 +217,26 @@ export class AuthController {
       console.error(error);
 
       return res.status(500).json({ error: "Erro ao atualizar workspace." });
+    }
+  }
+
+  async deleteWorkspace(req: AuthenticatedRequest, res: Response) {
+    try {
+      if (req.user.organizationId === demoWorkspaceId) {
+        return res.status(403).json({
+          error: "O Demo Workspace nao pode ser excluido.",
+        });
+      }
+
+      await prisma.organization.delete({
+        where: { id: req.user.organizationId },
+      });
+
+      return res.status(204).send();
+    } catch (error) {
+      console.error(error);
+
+      return res.status(500).json({ error: "Erro ao excluir workspace." });
     }
   }
 }

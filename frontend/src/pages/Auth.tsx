@@ -5,6 +5,8 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 type AuthMode = "login" | "register";
+const demoEmail = "demo@processhub.com";
+const demoPassword = "123456";
 
 export function Auth() {
   const { isAuthenticated, login, register } = useAuth();
@@ -54,6 +56,13 @@ export function Auth() {
 
   const inputClass =
     "min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 lg:py-2";
+
+  function fillDemoCredentials() {
+    setMode("login");
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setError("");
+  }
 
   return (
     <main className="grid min-h-screen overflow-y-auto bg-[#f7f9fc] text-slate-950 lg:h-screen lg:overflow-hidden lg:grid-cols-[minmax(0,1fr)_440px]">
@@ -237,9 +246,19 @@ export function Auth() {
                 {isSubmitting
                   ? "Processando..."
                   : mode === "login"
-                    ? "Entrar"
-                    : "Criar workspace"}
+                  ? "Entrar"
+                  : "Criar workspace"}
               </button>
+
+              {mode === "login" && (
+                <button
+                  type="button"
+                  onClick={fillDemoCredentials}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 lg:py-2"
+                >
+                  Usar Demo Workspace
+                </button>
+              )}
             </form>
           </div>
         </div>

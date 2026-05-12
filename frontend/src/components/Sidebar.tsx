@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LogOut,
   Workflow,
+  Trash2,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -15,13 +16,18 @@ import { useAuth } from "../hooks/useAuth";
 
 export function Sidebar() {
   const location = useLocation();
-  const { user, organization, logout, updateWorkspace } = useAuth();
+  const { user, organization, logout, updateWorkspace, deleteWorkspace } =
+    useAuth();
   const [isEditingWorkspace, setIsEditingWorkspace] = useState(false);
   const [workspaceName, setWorkspaceName] = useState(organization?.name || "");
   const [workspaceError, setWorkspaceError] = useState("");
   const [isSavingWorkspace, setIsSavingWorkspace] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeletingWorkspace, setIsDeletingWorkspace] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
+  const isDemoWorkspace =
+    organization?.id === "00000000-0000-0000-0000-000000000001";
 
   const linkClass = (path: string) =>
     `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
@@ -53,6 +59,31 @@ export function Sidebar() {
       setWorkspaceError("Nao foi possivel atualizar o workspace.");
     } finally {
       setIsSavingWorkspace(false);
+    }
+  }
+
+  async function handleDeleteWorkspace() {
+    setDeleteError("");
+
+    if (isDemoWorkspace) {
+      setDeleteError("O Demo Workspace nao pode ser excluido.");
+      return;
+    }
+
+    const workspaceLabel = organization?.name || "Workspace";
+    const confirmation = window.prompt(
+      `Digite "${workspaceLabel}" para excluir este workspace e todos os dados vinculados.`,
+    );
+
+    if (confirmation !== workspaceLabel) return;
+
+    try {
+      setIsDeletingWorkspace(true);
+      await deleteWorkspace();
+    } catch {
+      setDeleteError("Nao foi possivel excluir o workspace.");
+    } finally {
+      setIsDeletingWorkspace(false);
     }
   }
 
@@ -112,6 +143,17 @@ export function Sidebar() {
           >
             <LogOut size={17} />
           </button>
+          <button
+            type="button"
+            onClick={handleDeleteWorkspace}
+            disabled={isDeletingWorkspace || isDemoWorkspace}
+            className="rounded-md p-2 text-slate-500 transition hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
+            title={
+              isDemoWorkspace ? "Demo Workspace protegido" : "Excluir workspace"
+            }
+          >
+            <Trash2 size={17} />
+          </button>
         </div>
       </div>
 
@@ -144,6 +186,25 @@ export function Sidebar() {
           <LogOut size={14} />
           Sair
         </button>
+
+        <button
+          type="button"
+          onClick={handleDeleteWorkspace}
+          disabled={isDeletingWorkspace || isDemoWorkspace}
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+          title={
+            isDemoWorkspace ? "Demo Workspace protegido" : "Excluir workspace"
+          }
+        >
+          <Trash2 size={14} />
+          {isDeletingWorkspace ? "Excluindo..." : "Excluir workspace"}
+        </button>
+
+        {deleteError && (
+          <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            {deleteError}
+          </div>
+        )}
       </div>
 
       {isEditingWorkspace && (

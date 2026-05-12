@@ -97,6 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [persistSession, session],
   );
 
+  const deleteWorkspace = useCallback(async () => {
+    if (!session?.token) return;
+
+    await api.delete("/auth/workspace");
+    logout();
+  }, [logout, session?.token]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       token: session?.token ?? null,
@@ -107,9 +114,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       register,
       updateWorkspace,
+      deleteWorkspace,
       logout,
     }),
-    [isLoading, login, logout, register, session, updateWorkspace],
+    [
+      deleteWorkspace,
+      isLoading,
+      login,
+      logout,
+      register,
+      session,
+      updateWorkspace,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

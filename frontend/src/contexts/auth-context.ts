@@ -32,6 +32,7 @@ export interface AuthContextValue {
     workspaceName: string;
   }) => Promise<void>;
   updateWorkspace: (name: string) => Promise<void>;
+  deleteWorkspace: () => Promise<void>;
   logout: () => void;
 }
 

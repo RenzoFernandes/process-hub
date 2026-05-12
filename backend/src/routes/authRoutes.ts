@@ -15,5 +15,8 @@ authRoutes.get("/me", authMiddleware, (req, res) =>
 authRoutes.put("/workspace", authMiddleware, (req, res) =>
   authController.updateWorkspace(asAuth(req), res),
 );
+authRoutes.delete("/workspace", authMiddleware, (req, res) =>
+  authController.deleteWorkspace(asAuth(req), res),
+);
 
 export { authRoutes };
