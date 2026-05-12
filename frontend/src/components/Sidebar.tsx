@@ -1,11 +1,11 @@
 import {
-  Boxes,
   Building2,
   Check,
   Pencil,
   FolderTree,
   LayoutDashboard,
   LogOut,
+  Workflow,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -61,12 +61,12 @@ export function Sidebar() {
       <div className="mb-4 lg:mb-6">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-950 text-white shadow-sm">
-            <Boxes size={22} />
+            <Workflow size={22} />
           </div>
 
           <div className="min-w-0">
             <h1 className="text-xl font-bold text-slate-950">ProcessHub</h1>
-            <p className="text-xs text-slate-500">Operations workspace</p>
+            <p className="text-xs text-slate-500">SaaS process management</p>
           </div>
         </div>
       </div>

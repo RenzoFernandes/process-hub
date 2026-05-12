@@ -2,7 +2,8 @@ import axios from "axios";
 
 // Cliente HTTP centralizado para manter a comunicacao REST com o backend em um unico ponto.
 export const api = axios.create({
-  baseURL: "http://localhost:3333",
+  baseURL:
+    import.meta.env.VITE_API_URL || "http://localhost:3333",
 });
 
 export function setAuthToken(token: string | null) {

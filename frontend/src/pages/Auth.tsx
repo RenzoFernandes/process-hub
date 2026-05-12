@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Boxes, Building2, Lock, LogIn, UserPlus } from "lucide-react";
+import { Building2, Lock, LogIn, UserPlus, Workflow } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
@@ -66,11 +66,11 @@ export function Auth() {
         <div className="relative">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-slate-950">
-              <Boxes size={23} />
+              <Workflow size={23} />
             </div>
             <div>
               <h1 className="text-2xl font-bold">ProcessHub</h1>
-              <p className="text-sm text-slate-300">Process workspace</p>
+              <p className="text-sm text-slate-300">SaaS process management</p>
             </div>
           </div>
 
@@ -102,11 +102,11 @@ export function Auth() {
         <div className="w-full max-w-md">
           <div className="mb-6 flex items-center gap-3 lg:hidden">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-950 text-white">
-              <Boxes size={21} />
+              <Workflow size={21} />
             </div>
             <div>
               <h1 className="text-xl font-bold">ProcessHub</h1>
-              <p className="text-xs text-slate-500">Process workspace</p>
+              <p className="text-xs text-slate-500">SaaS process management</p>
             </div>
           </div>
 

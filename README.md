@@ -1,157 +1,122 @@
-# ProcessHub
+# ProcessHub SaaS Full Stack
 
-ProcessHub e uma plataforma SaaS multi-tenant para gestao corporativa de processos. Cada empresa trabalha dentro do seu proprio workspace, com usuarios, areas, processos, subprocessos e documentacao isolados por organizacao.
+Plataforma full stack para gestao corporativa de processos com arquitetura SaaS multi-tenant, autenticacao JWT, API REST em Node.js, banco PostgreSQL e interface responsiva em React.
 
-A proposta do produto e substituir planilhas, fluxos informais e documentos espalhados por um ambiente operacional moderno: autenticacao, workspaces, Dashboard executivo, Process Explorer, gestao de areas e hierarquia ilimitada de subprocessos.
+O projeto simula um produto real para empresas organizarem areas, processos, subprocessos, responsaveis, ferramentas e documentacao operacional dentro de workspaces isolados. Cada empresa acessa somente seus proprios dados.
 
-## Destaques
+Frontend hospedado na Vercel, backend hospedado no Render e banco PostgreSQL em cloud com Neon.
 
-- **SaaS multi-tenant:** dados isolados por `organizationId`.
-- **Autenticacao segura:** cadastro, login, JWT, hash de senha com bcrypt e logout.
-- **Workspaces organizacionais:** criacao e edicao do nome do workspace/empresa.
-- **Process Explorer:** raias verticais por status, cards horizontais, subprocessos expansivos e drawer lateral de detalhes.
-- **Dashboard operacional:** indicadores por area, status, prioridade, processos e subprocessos.
-- **CRUD completo:** areas, processos e subprocessos por workspace.
-- **Hierarquia recursiva:** subprocessos ilimitados com `parentId` e `children`.
-- **Docker first:** PostgreSQL em container para setup local rapido e consistente.
+**Node.js Express Prisma PostgreSQL React Vite Tailwind CSS JWT bcrypt Docker Vercel Render Neon**
 
-## Stack tecnica
+## Sobre o projeto
 
-**Frontend**
+O ProcessHub foi desenvolvido para demonstrar uma arquitetura full stack moderna, com foco em produto SaaS, seguranca, experiencia corporativa e isolamento de dados por organizacao.
+
+A aplicacao substitui fluxogramas complexos por uma experiencia de Process Explorer, inspirada em ferramentas como Jira, Linear, ClickUp e Notion. Os processos sao organizados por status, exibidos em cards modernos e podem conter subprocessos recursivos em profundidade ilimitada.
+
+## Funcionalidades
+
+- Criar conta e workspace/empresa.
+- Fazer login com email e senha.
+- Gerar e validar token JWT.
+- Proteger rotas privadas no backend e no frontend.
+- Exibir usuario autenticado e workspace atual.
+- Editar informacoes do workspace.
+- Criar, listar, editar e excluir areas.
+- Criar, listar, editar e excluir processos.
+- Criar subprocessos em multiplos niveis.
+- Renderizar hierarquia recursiva via `children`.
+- Filtrar automaticamente dados por workspace autenticado.
+- Visualizar Dashboard com indicadores operacionais.
+- Navegar por Process Explorer com cards, status e drawer de detalhes.
+- Exibir tipo, responsaveis, ferramentas, prioridade, status e documentacao.
+- Fazer logout e limpar sessao local.
+- Manter PostgreSQL local via Docker para desenvolvimento.
+
+## Arquitetura SaaS multi-tenant
+
+Cada usuario pertence a uma organizacao. Areas, processos e subprocessos tambem sao vinculados a essa organizacao.
+
+Isso garante que usuarios de empresas diferentes nunca visualizem dados uns dos outros.
+
+```mermaid
+flowchart LR
+  Browser[React + Vite] -->|Axios + JWT| API[Node.js + Express]
+  API --> Auth[Auth Controller]
+  API --> Middleware[Auth Middleware]
+  Middleware --> PrivateRoutes[Areas e Processes]
+  PrivateRoutes --> Prisma[Prisma ORM]
+  Prisma --> Database[(PostgreSQL / Neon)]
+```
+
+## Tecnologias utilizadas
+
+### Frontend
 
 - React
 - TypeScript
 - Vite
 - Tailwind CSS
 - Axios
+- React Router DOM
 - Lucide React
 
-**Backend**
+### Backend
 
 - Node.js
-- TypeScript
 - Express
+- TypeScript
 - Prisma ORM
 - PostgreSQL
 - JSON Web Token
 - bcrypt
+- dotenv
+- CORS
 
-**Ambiente local**
+### Infraestrutura
 
-- Docker Compose
-- PostgreSQL 16
+- Docker Compose para PostgreSQL local
+- Vercel para deploy do frontend
+- Render para deploy da API
+- Neon para banco PostgreSQL em cloud
 
-## Como executar localmente
+## Estrutura do projeto
 
-### 1. Subir o PostgreSQL
-
-```bash
-docker compose up -d
-```
-
-O banco roda dentro do Docker e fica exposto em `localhost:5433`.
-
-### 2. Configurar variaveis de ambiente
-
-Crie ou confira o arquivo `backend/.env`:
-
-```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/processhub?schema=public
-PORT=3333
-JWT_SECRET=processhub-local-development-secret
-```
-
-### 3. Instalar dependencias
-
-```bash
-cd backend
-npm install
-
-cd ../frontend
-npm install
-```
-
-### 4. Aplicar migrations e gerar Prisma Client
-
-```bash
-cd backend
-npx.cmd prisma migrate deploy
-npx.cmd prisma generate
-```
-
-Durante desenvolvimento, para criar novas migrations:
-
-```bash
-npx.cmd prisma migrate dev
-```
-
-### 5. Rodar backend
-
-```bash
-cd backend
-npm run dev
-```
-
-API local: `http://localhost:3333`
-
-### 6. Rodar frontend
-
-```bash
-cd frontend
-npm run dev
-```
-
-Aplicacao local: `http://localhost:5173`
-
-## Fluxo principal
-
-1. Usuario acessa `/auth`.
-2. Pode entrar com uma conta existente ou criar uma conta nova.
-3. Ao criar conta, tambem cria o workspace da empresa.
-4. A sessao e persistida no navegador com JWT.
-5. A aplicacao abre o workspace autenticado.
-6. Dashboard, Areas e Processos carregam somente dados da organizacao do usuario.
-7. O nome do workspace aparece na sidebar e pode ser editado.
-8. Logout remove token e sessao local.
-
-## Arquitetura
-
-```mermaid
-flowchart LR
-  Browser[React + Vite] -->|JWT + HTTP JSON| API[Express API]
-  API --> AuthRoutes[Auth Routes]
-  API --> AuthMiddleware[Auth Middleware]
-  AuthMiddleware --> PrivateRoutes[Areas / Processes]
-  PrivateRoutes --> Controllers[Controllers]
-  Controllers --> Prisma[Prisma Client]
-  Prisma --> Postgres[(PostgreSQL Docker)]
-```
-
-## API
-
-Rotas publicas:
-
-- `POST /auth/register`
-- `POST /auth/login`
-
-Rotas autenticadas:
-
-- `GET /auth/me`
-- `PUT /auth/workspace`
-- `GET /areas`
-- `POST /areas`
-- `PUT /areas/:id`
-- `DELETE /areas/:id`
-- `GET /processes`
-- `GET /processes/tree`
-- `POST /processes`
-- `PUT /processes/:id`
-- `DELETE /processes/:id`
-
-Rotas privadas exigem:
-
-```http
-Authorization: Bearer <token>
+```text
+process-hub/
+|-- backend/
+|   |-- prisma/
+|   |   |-- migrations/
+|   |   `-- schema.prisma
+|   |-- src/
+|   |   |-- controllers/
+|   |   |-- middlewares/
+|   |   |-- routes/
+|   |   |-- lib/
+|   |   |-- app.ts
+|   |   `-- server.ts
+|   |-- .env
+|   `-- package.json
+|
+|-- frontend/
+|   |-- public/
+|   |-- src/
+|   |   |-- components/
+|   |   |-- contexts/
+|   |   |-- hooks/
+|   |   |-- pages/
+|   |   |-- services/
+|   |   |-- App.tsx
+|   |   `-- main.tsx
+|   |-- index.html
+|   |-- vercel.json
+|   `-- package.json
+|
+|-- docs/
+|   `-- APRESENTACAO_TECNICA.md
+|-- docker-compose.yml
+|-- .env.example
+`-- README.md
 ```
 
 ## Modelo de dados
@@ -163,70 +128,198 @@ erDiagram
   Organization ||--o{ Process : possui
   Area ||--o{ Process : classifica
   Process ||--o{ Process : possui_subprocessos
-
-  Organization {
-    string id
-    string name
-    string slug
-  }
-
-  User {
-    string id
-    string name
-    string email
-    string passwordHash
-    string organizationId
-  }
-
-  Area {
-    string id
-    string name
-    string description
-    string organizationId
-  }
-
-  Process {
-    string id
-    string name
-    string description
-    string status
-    string priority
-    string executionType
-    string tools
-    string responsibles
-    string documentation
-    string organizationId
-    string areaId
-    string parentId
-  }
 ```
 
-## Isolamento multi-tenant
+Entidades principais:
 
-O JWT carrega `userId` e `organizationId`. O middleware valida o token e injeta esses dados na request.
+- **Organization:** workspace ou empresa.
+- **User:** usuario autenticado vinculado a uma organizacao.
+- **Area:** area da empresa dentro do workspace.
+- **Process:** processo ou subprocesso com suporte a hierarquia recursiva.
 
-Todas as operacoes de areas e processos usam:
+## Endpoints da API
 
-```ts
-organizationId: req.user.organizationId
+| Metodo | Rota | Descricao | Autenticacao |
+| --- | --- | --- | --- |
+| POST | `/auth/register` | Cria usuario e workspace | Nao |
+| POST | `/auth/login` | Autentica usuario e retorna JWT | Nao |
+| GET | `/auth/me` | Retorna usuario e workspace autenticados | Sim |
+| PUT | `/auth/workspace` | Atualiza nome do workspace | Sim |
+| GET | `/areas` | Lista areas do workspace | Sim |
+| POST | `/areas` | Cria area | Sim |
+| PUT | `/areas/:id` | Atualiza area | Sim |
+| DELETE | `/areas/:id` | Remove area | Sim |
+| GET | `/processes` | Lista processos do workspace | Sim |
+| GET | `/processes/tree` | Lista processos em arvore recursiva | Sim |
+| POST | `/processes` | Cria processo ou subprocesso | Sim |
+| PUT | `/processes/:id` | Atualiza processo | Sim |
+| DELETE | `/processes/:id` | Remove processo e descendentes | Sim |
+
+Rotas privadas utilizam o header:
+
+```http
+Authorization: Bearer seu_token_jwt
 ```
 
-Com isso, listagens, criacoes, edicoes, exclusoes e a arvore `/processes/tree` operam apenas dentro do workspace autenticado.
+## Seguranca
 
-## Seguranca e integridade
+- Senhas armazenadas com hash usando bcrypt.
+- Autenticacao baseada em JSON Web Token.
+- Middleware para proteger rotas privadas.
+- Token carrega `userId` e `organizationId`.
+- Controllers sempre filtram por `organizationId`.
+- Areas e processos pertencem obrigatoriamente a um workspace.
+- Processos pais precisam pertencer ao mesmo workspace.
+- Validacao impede ciclos na arvore de subprocessos.
+- Exclusoes respeitam o escopo da organizacao autenticada.
 
-- Senhas armazenadas como hash com bcrypt.
-- JWT assinado com `JWT_SECRET`.
-- Rotas privadas protegidas por middleware.
-- Usuario pertence a uma unica organizacao.
-- Area e processo sempre pertencem a uma organizacao.
-- Processo so pode usar area do mesmo workspace.
-- Processo pai precisa existir no mesmo workspace.
-- Validacao impede ciclos na hierarquia.
-- Exclusao de processo remove subprocessos descendentes.
-- Exclusao de area remove processos vinculados via cascade.
+## Como rodar localmente
 
-## Validacao do projeto
+### 1. Clone o repositorio
+
+```bash
+git clone https://github.com/RenzoFernandes/process-hub.git
+cd process-hub
+```
+
+### 2. Suba o PostgreSQL com Docker
+
+```bash
+docker compose up -d
+```
+
+O PostgreSQL local fica disponivel em:
+
+```text
+localhost:5433
+```
+
+### 3. Configure as variaveis de ambiente
+
+Crie ou confira o arquivo `backend/.env`:
+
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/processhub?schema=public
+PORT=3333
+JWT_SECRET=sua_chave_secreta
+```
+
+Para producao, use a URL do banco Neon em `DATABASE_URL` e uma chave forte em `JWT_SECRET`.
+
+### 4. Instale as dependencias
+
+Backend:
+
+```bash
+cd backend
+npm install
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm install
+```
+
+### 5. Execute as migrations do Prisma
+
+```bash
+cd backend
+npx prisma migrate deploy
+npx prisma generate
+```
+
+Durante desenvolvimento:
+
+```bash
+npx prisma migrate dev
+```
+
+### 6. Rode o backend
+
+```bash
+cd backend
+npm run dev
+```
+
+API local:
+
+```text
+http://localhost:3333
+```
+
+### 7. Rode o frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+Aplicacao local:
+
+```text
+http://localhost:5173
+```
+
+## Interface
+
+A interface foi desenhada para parecer um produto SaaS corporativo:
+
+- tela de autenticacao responsiva;
+- sidebar com usuario, workspace e logout;
+- dashboard executivo compacto;
+- CRUD de areas;
+- Process Explorer com cards por status;
+- subprocessos expansivos e recolhiveis;
+- drawer lateral com detalhes completos do processo;
+- feedback visual, estados vazios e transicoes suaves.
+
+## Deploy
+
+### Frontend
+
+Hospedado na Vercel.
+
+Link da aplicacao:
+
+```text
+URL publica da Vercel
+```
+
+O arquivo `frontend/vercel.json` configura fallback para SPA:
+
+```json
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+```
+
+### Backend
+
+Hospedado no Render.
+
+Link da API:
+
+```text
+URL publica do Render
+```
+
+No plano gratuito do Render, a primeira requisicao pode demorar alguns segundos quando o servidor esta inativo.
+
+### Banco de dados
+
+PostgreSQL hospedado no Neon.
+
+Variavel usada pelo backend em producao:
+
+```env
+DATABASE_URL=postgresql://usuario:senha@host.neon.tech/database?sslmode=require
+```
+
+## Validacao
+
+Comandos usados para validar o projeto:
 
 ```bash
 cd backend
@@ -237,8 +330,35 @@ npm run lint
 npm run build
 ```
 
+## Aprendizados aplicados
+
+- Separacao entre frontend e backend.
+- API REST com Express e TypeScript.
+- ORM com Prisma e migrations versionadas.
+- Autenticacao JWT com rotas privadas.
+- Hash de senha com bcrypt.
+- Multi-tenancy por organizacao.
+- Controle de acesso por workspace autenticado.
+- Arvore recursiva de processos e subprocessos.
+- Consumo de API com Axios.
+- Protecao de rotas no React.
+- Deploy full stack com Vercel, Render e Neon.
+- Ambiente local padronizado com Docker.
+
+## Status
+
+Projeto em versao V1, contendo autenticacao, workspaces organizacionais, isolamento multi-tenant, CRUD completo de areas/processos, hierarquia recursiva de subprocessos, dashboard, Process Explorer e deploy em cloud.
+
+## Autor
+
+Desenvolvido por Renzo Heiki.
+
+GitHub: [RenzoFernandes](https://github.com/RenzoFernandes)
+
+LinkedIn: [renzo-fernandes](https://www.linkedin.com/in/renzo-fernandes)
+
 ## Material complementar
 
-A apresentacao tecnica esta em:
+Apresentacao tecnica:
 
 [docs/APRESENTACAO_TECNICA.md](docs/APRESENTACAO_TECNICA.md)
