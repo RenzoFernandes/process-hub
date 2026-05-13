@@ -68,21 +68,21 @@ export function ProcessForm({
   const labelClass = "text-xs font-semibold uppercase tracking-wide text-slate-500";
 
   return (
-    <section className="mb-6 rounded-lg border border-slate-200 bg-white shadow-sm">
+    <section className="mb-4 rounded-lg border border-slate-200 bg-white shadow-sm">
       <button
         type="button"
         onClick={() => setIsExpanded((current) => !current)}
-        className="flex w-full items-center justify-between gap-4 p-4 text-left transition hover:bg-slate-50 sm:p-5"
+        className="flex w-full items-center justify-between gap-4 p-3 text-left transition hover:bg-slate-50 sm:px-4"
       >
         <span className="flex min-w-0 items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-700">
-            <Plus size={21} />
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-700">
+            <Plus size={19} />
           </span>
           <span className="min-w-0">
-            <span className="block text-lg font-semibold text-slate-950">
+            <span className="block text-base font-semibold text-slate-950">
               Cadastrar processo
             </span>
-            <span className="mt-1 block text-sm leading-5 text-slate-500">
+            <span className="mt-0.5 block text-sm leading-5 text-slate-500">
               Abra o formulario para adicionar processos raiz ou subprocessos.
             </span>
           </span>
@@ -154,9 +154,9 @@ export function ProcessForm({
                 onChange={(event) => setStatus(event.target.value)}
               >
                 <option value="open">Aberto</option>
-                <option value="in_progress">Em andamento</option>
-                <option value="review">Em revisao</option>
-                <option value="closed">Fechado</option>
+                <option value="in_progress">Em Andamento</option>
+                <option value="review">Em Revisao</option>
+                <option value="closed">Concluido</option>
               </select>
             </label>
 

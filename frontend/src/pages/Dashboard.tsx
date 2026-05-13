@@ -18,9 +18,9 @@ const allAreasId = "all";
 
 const statusLabels: Record<string, string> = {
   open: "Aberto",
-  in_progress: "Em andamento",
-  review: "Em revisao",
-  closed: "Fechado",
+  in_progress: "Em Andamento",
+  review: "Em Revisao",
+  closed: "Concluido",
   active: "Ativo",
   mapped: "Mapeado",
 };
@@ -195,7 +195,7 @@ export function Dashboard() {
             items={[
               ["Processos raiz", rootProcessCount],
               ["Subprocessos", subprocessCount],
-              ["Processos fechados", closedCount],
+              ["Processos concluidos", closedCount],
               [
                 selectedArea ? "Area em foco" : "Areas com processos",
                 selectedArea

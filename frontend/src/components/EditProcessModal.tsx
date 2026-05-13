@@ -145,9 +145,9 @@ export function EditProcessModal({
               onChange={(event) => setStatus(event.target.value)}
             >
               <option value="open">Aberto</option>
-              <option value="in_progress">Em andamento</option>
-              <option value="review">Em revisão</option>
-              <option value="closed">Fechado</option>
+              <option value="in_progress">Em Andamento</option>
+              <option value="review">Em Revisao</option>
+              <option value="closed">Concluido</option>
             </select>
           </label>
 

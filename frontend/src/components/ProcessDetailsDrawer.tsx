@@ -25,9 +25,9 @@ interface ProcessDetailsDrawerProps {
 
 const statusLabels: Record<string, string> = {
   open: "Aberto",
-  in_progress: "Em andamento",
-  review: "Em revisao",
-  closed: "Fechado",
+  in_progress: "Em Andamento",
+  review: "Em Revisao",
+  closed: "Concluido",
   active: "Ativo",
   mapped: "Mapeado",
 };

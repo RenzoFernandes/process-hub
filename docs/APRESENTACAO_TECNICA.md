@@ -1,83 +1,64 @@
-# Apresentacao Tecnica - ProcessHub SaaS
+# Apresentacao Tecnica - ProcessHub
 
-## 1. Visao geral
+## 1. Resumo executivo
 
-ProcessHub e uma plataforma SaaS multi-tenant para gestao corporativa de processos. A aplicacao permite que cada empresa trabalhe em seu proprio workspace, com usuarios, areas, processos, subprocessos e documentacao isolados por organizacao.
+ProcessHub e uma aplicacao full stack para gestao de processos corporativos em modelo SaaS multi-tenant. O produto organiza areas, processos, subprocessos, responsaveis, prioridades, status e documentacao operacional dentro de workspaces isolados por empresa.
 
-O produto foi construido como uma aplicacao full stack moderna, com autenticacao JWT, hash de senhas, API REST, PostgreSQL, Prisma ORM, frontend React e deploy em cloud com Vercel, Render e Neon.
+O objetivo do projeto e demonstrar dominio de arquitetura web moderna: frontend React, API REST com Node.js e Express, persistencia PostgreSQL com Prisma, autenticacao JWT, isolamento por tenant e deploy cloud.
 
-## 2. Proposta do produto
+## 2. Problema
 
-Empresas costumam documentar processos em planilhas, fluxogramas estaticos, documentos soltos e ferramentas sem padrao. Isso dificulta a visualizacao de responsaveis, status, prioridades, subprocessos e documentacao associada.
+Em muitas empresas, processos ficam distribuidos entre planilhas, documentos, fluxogramas, mensagens e ferramentas sem padrao. Isso cria alguns problemas:
 
-O ProcessHub centraliza essa operacao em uma interface limpa e corporativa, com uma experiencia mais proxima de produtos como Jira, Linear, ClickUp, Monday e Notion.
+- baixa visibilidade sobre status e prioridade;
+- dificuldade para saber quem e responsavel por cada etapa;
+- documentacao operacional espalhada;
+- pouca rastreabilidade entre processos e subprocessos;
+- risco de misturar dados de diferentes unidades ou clientes.
 
-## 3. Funcionalidades entregues
+## 3. Solucao proposta
 
-- Cadastro de usuario e criacao de workspace.
-- Login com JWT.
-- Sessao persistida no frontend.
-- Logout seguro.
-- Edicao do nome do workspace.
-- CRUD de areas.
-- CRUD de processos.
-- Criacao de subprocessos em multiplos niveis.
-- Arvore recursiva via `children`.
-- Dashboard com indicadores do workspace.
-- Process Explorer com cards por status.
-- Drawer lateral com detalhes completos do processo.
-- Isolamento completo de dados por organizacao.
+O ProcessHub centraliza a gestao operacional em um workspace unico por organizacao.
 
-## 4. Arquitetura
+A solucao entrega:
+
+- cadastro de workspace e usuario;
+- areas da empresa;
+- processos e subprocessos em arvore;
+- pipeline visual por status;
+- dashboard com indicadores;
+- detalhes completos de cada processo;
+- isolamento seguro por organizacao.
+
+## 4. Diferenciais tecnicos
+
+- **Multi-tenancy real:** todos os dados privados sao filtrados por `organizationId`.
+- **Hierarquia recursiva:** processos podem ter subprocessos em multiplos niveis.
+- **Kanban operacional:** processos sao visualizados e movimentados por status.
+- **API protegida:** rotas privadas exigem JWT.
+- **Seguranca de senha:** bcrypt armazena apenas hash.
+- **Prisma ORM:** schema tipado, migrations e relacoes claras.
+- **Separacao full stack:** frontend e backend independentes, prontos para deploy separado.
+
+## 5. Arquitetura geral
 
 ```mermaid
 flowchart LR
-  Frontend[React + Vite + Tailwind] -->|Axios + JWT| Backend[Node.js + Express]
-  Backend --> Auth[Auth Controller]
-  Backend --> Middleware[Auth Middleware]
-  Middleware --> Routes[Private Routes]
-  Routes --> Prisma[Prisma Client]
-  Prisma --> Postgres[(PostgreSQL / Neon)]
+  User[Usuario] --> Browser[React + Vite]
+  Browser -->|Axios + JWT| API[Node.js + Express]
+  API --> Auth[Auth Middleware]
+  Auth --> Controllers[Controllers]
+  Controllers --> Prisma[Prisma Client]
+  Prisma --> DB[(PostgreSQL)]
 ```
 
-Camadas principais:
+Responsabilidades:
 
-- **Frontend:** interface, autenticacao, rotas protegidas e consumo da API.
-- **Backend:** regras de negocio, autenticacao, validacoes e endpoints REST.
-- **Banco:** PostgreSQL com schema versionado por Prisma.
-- **Infra local:** Docker Compose para subir PostgreSQL rapidamente.
-- **Infra cloud:** Vercel, Render e Neon.
-
-## 5. Multi-tenancy
-
-O tenant da plataforma e a `Organization`.
-
-Cada usuario pertence a uma organizacao:
-
-```ts
-organizationId
-```
-
-Areas e processos tambem possuem `organizationId`. Depois do login, o JWT carrega:
-
-```ts
-{
-  userId,
-  organizationId
-}
-```
-
-O middleware de autenticacao valida o token e injeta os dados do usuario na request. A partir disso, todos os controllers privados filtram automaticamente por workspace.
-
-Exemplo:
-
-```ts
-where: {
-  organizationId: req.user.organizationId
-}
-```
-
-Esse desenho impede que usuarios de um workspace acessem dados de outra empresa.
+- **Frontend:** interface, rotas protegidas, sessao, dashboard e consumo REST.
+- **Backend:** regras de negocio, autenticacao, autorizacao, validacoes e endpoints.
+- **Banco:** persistencia relacional, integridade e hierarquia de processos.
+- **Docker:** PostgreSQL local padronizado.
+- **Cloud:** Vercel, Render e Neon como alvo de deploy.
 
 ## 6. Modelo de dados
 
@@ -92,46 +73,78 @@ erDiagram
 
 Entidades:
 
-- **Organization:** representa a empresa ou workspace.
-- **User:** representa o usuario autenticado.
-- **Area:** representa uma area interna da empresa.
-- **Process:** representa processo ou subprocesso.
+- **Organization:** empresa ou workspace.
+- **User:** usuario autenticado.
+- **Area:** unidade, departamento ou setor.
+- **Process:** processo ou subprocesso.
 
-Processos usam lista de adjacencia:
+Trecho central do modelo:
 
 ```prisma
-parentId String?
-parent   Process?
-children Process[]
+model Process {
+  id             String    @id @default(uuid())
+  name           String
+  status         String?
+  priority       String?
+  executionType  String?
+  organizationId String
+  areaId         String
+  parentId       String?
+
+  parent   Process?  @relation("ProcessHierarchy", fields: [parentId], references: [id])
+  children Process[] @relation("ProcessHierarchy")
+}
 ```
 
-Essa abordagem permite hierarquias profundas sem criar colunas ou tabelas por nivel.
+Essa lista de adjacencia permite representar arvores profundas sem criar tabelas extras para cada nivel.
 
-## 7. Backend
+## 7. Multi-tenancy
+
+O tenant da plataforma e a `Organization`.
+
+Depois do login, o token carrega:
+
+```ts
+{
+  userId,
+  organizationId
+}
+```
+
+O middleware valida o JWT e injeta o usuario autenticado na request. A partir disso, controllers privados usam o `organizationId` para filtrar dados:
+
+```ts
+where: {
+  organizationId: req.user.organizationId
+}
+```
+
+Com isso, uma empresa nao acessa areas, processos ou subprocessos de outra empresa.
+
+## 8. Backend
 
 Stack:
 
 - Node.js
 - Express
 - TypeScript
-- Prisma ORM
+- Prisma
 - PostgreSQL
 - JWT
 - bcrypt
 
-Responsabilidades:
+Principais responsabilidades:
 
 - cadastrar usuario e workspace;
 - autenticar credenciais;
-- gerar JWT;
+- gerar token JWT;
 - proteger rotas privadas;
-- aplicar isolamento por organizacao;
-- validar area, status, prioridade e tipo do processo;
-- impedir ciclos em subprocessos;
-- montar a arvore de processos em `/processes/tree`;
+- validar pertencimento de area e processo ao workspace;
+- impedir ciclos na arvore de subprocessos;
+- montar a arvore recursiva em `/processes/tree`;
 - excluir processos com descendentes quando necessario.
 
-## 8. Frontend
+## 9. Frontend
 
 Stack:
 
@@ -141,112 +154,144 @@ Stack:
 - Tailwind CSS
 - Axios
 - React Router DOM
+- dnd-kit
 - Lucide React
 
-Fluxo:
+Principais telas:
 
-1. Usuario acessa `/auth`.
-2. Pode entrar ou criar uma nova conta.
-3. Ao criar conta, tambem cria a empresa/workspace.
-4. Depois do login, a aplicacao abre a area autenticada.
-5. Dashboard, Areas e Processos carregam apenas dados da organizacao.
-6. A sidebar exibe usuario, workspace, edicao do workspace e logout.
+- **Auth:** login e cadastro.
+- **Dashboard:** indicadores de areas, processos, prioridades e status.
+- **Areas:** CRUD de areas.
+- **Processos:** cadastro, filtros, pipeline Kanban e drawer de detalhes.
 
-## 9. Experiencia de usuario
+## 10. Experiencia de usuario
 
-A interface foi pensada como produto SaaS enterprise:
+A interface foi desenhada para uma ferramenta SaaS corporativa:
 
-- visual limpo e responsivo;
-- layout corporativo com tons slate, sky e branco;
-- cards modernos para processos;
-- status organizados por secoes verticais;
-- navegacao horizontal em processos dentro de cada status;
-- subprocessos expansivos e recolhiveis;
-- drawer lateral para detalhes completos;
-- dashboard sem excesso de rolagem no desktop;
-- autenticacao compacta e profissional.
+- sidebar com workspace, usuario e navegacao;
+- dashboard compacto e escaneavel;
+- filtros por area;
+- pipeline com colunas de status;
+- cards com prioridade, tipo, responsavel e data;
+- detalhes laterais sem sair do contexto;
+- suporte a desktop e mobile.
 
-## 10. Endpoints principais
+O Process Explorer e a principal experiencia do produto. Ele permite acompanhar processos em quatro estados:
 
-| Metodo | Rota | Descricao |
-| --- | --- | --- |
-| POST | `/auth/register` | Cria usuario e workspace |
-| POST | `/auth/login` | Autentica usuario |
-| GET | `/auth/me` | Retorna sessao autenticada |
-| PUT | `/auth/workspace` | Atualiza workspace |
-| GET | `/areas` | Lista areas do workspace |
-| POST | `/areas` | Cria area |
-| PUT | `/areas/:id` | Atualiza area |
-| DELETE | `/areas/:id` | Remove area |
-| GET | `/processes/tree` | Retorna arvore de processos |
-| POST | `/processes` | Cria processo ou subprocesso |
-| PUT | `/processes/:id` | Atualiza processo |
-| DELETE | `/processes/:id` | Remove processo |
+- Aberto;
+- Em Andamento;
+- Em Revisao;
+- Concluido.
 
-Rotas privadas usam:
+## 11. Endpoints principais
+
+| Metodo | Rota | Descricao | Auth |
+| --- | --- | --- | --- |
+| POST | `/auth/register` | Cria usuario e workspace | Nao |
+| POST | `/auth/login` | Autentica usuario | Nao |
+| GET | `/auth/me` | Retorna sessao autenticada | Sim |
+| PUT | `/auth/workspace` | Atualiza workspace | Sim |
+| DELETE | `/auth/workspace` | Exclui workspace | Sim |
+| GET | `/areas` | Lista areas | Sim |
+| POST | `/areas` | Cria area | Sim |
+| PUT | `/areas/:id` | Atualiza area | Sim |
+| DELETE | `/areas/:id` | Remove area | Sim |
+| GET | `/processes` | Lista processos | Sim |
+| GET | `/processes/tree` | Retorna arvore de processos | Sim |
+| POST | `/processes` | Cria processo ou subprocesso | Sim |
+| PUT | `/processes/:id` | Atualiza processo | Sim |
+| DELETE | `/processes/:id` | Remove processo | Sim |
+
+Rotas privadas:
 
 ```http
 Authorization: Bearer <token>
 ```
 
-## 11. Seguranca
+## 12. Seguranca
 
-- Senhas nunca sao salvas em texto puro.
-- bcrypt gera `passwordHash`.
-- JWT protege as rotas privadas.
-- `JWT_SECRET` fica em variavel de ambiente.
-- Token inclui `userId` e `organizationId`.
-- Controllers filtram dados pelo workspace autenticado.
-- Area e processo precisam pertencer ao mesmo workspace.
-- Processo pai precisa estar na mesma organizacao.
-- Slug de organizacao e unico.
-- A arvore de subprocessos possui validacao contra ciclos.
+- Senhas com hash bcrypt.
+- JWT assinado com `JWT_SECRET`.
+- Middleware de autenticacao nas rotas privadas.
+- Token com `userId` e `organizationId`.
+- Controllers filtram dados por workspace.
+- Areas e processos precisam pertencer a organizacao autenticada.
+- Processo pai precisa estar no mesmo workspace.
+- Validacao contra ciclos na hierarquia.
+- Exclusao de workspace usa cascade no banco.
 
-## 12. Docker e ambiente local
+## 13. Ambiente local
 
-O projeto usa Docker Compose para padronizar o banco local:
+Subir banco:
 
 ```bash
 docker compose up -d
 ```
 
-Beneficios:
+Rodar backend:
 
-- setup rapido;
-- PostgreSQL isolado;
-- menos conflito com instalacoes locais;
-- ambiente mais proximo de um fluxo profissional.
+```bash
+cd backend
+npm install
+npx prisma migrate dev
+npm run seed:demo
+npm run dev
+```
 
-## 13. Deploy
+Rodar frontend:
 
-Infraestrutura usada:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Credenciais demo:
+
+```text
+demo@processhub.com
+123456
+```
+
+## 14. Deploy
+
+Arquitetura sugerida:
 
 - **Frontend:** Vercel.
 - **Backend:** Render.
 - **Banco:** Neon PostgreSQL.
 
-O deploy em cloud demonstra separacao real entre cliente, API e banco de dados.
+Variaveis importantes:
 
-Observacao: no plano gratuito do Render, a primeira requisicao pode demorar alguns segundos caso a API esteja inativa.
+```env
+DATABASE_URL=postgresql://...
+JWT_SECRET=...
+PORT=3333
+VITE_API_URL=https://sua-api.com
+```
 
-## 14. Como demonstrar
+Observacao: no plano gratuito do Render, a primeira requisicao pode demorar alguns segundos quando a API esta inativa.
 
-1. Abrir a aplicacao hospedada na Vercel.
-2. Criar uma conta e uma empresa.
-3. Mostrar login e workspace na sidebar.
-4. Criar uma area.
-5. Criar um processo raiz.
-6. Criar subprocessos em mais de um nivel.
-7. Abrir o Process Explorer.
-8. Expandir e recolher subprocessos.
-9. Abrir o drawer de detalhes.
-10. Editar o workspace.
-11. Fazer logout.
-12. Criar outro workspace e mostrar que os dados nao aparecem.
+## 15. Como apresentar o projeto
 
-## 15. Qualidade e validacao
+Roteiro recomendado:
 
-Comandos usados no projeto:
+1. Explicar o problema de processos espalhados.
+2. Mostrar que cada empresa possui um workspace isolado.
+3. Fazer login com o usuario demo.
+4. Apresentar a sidebar e o workspace.
+5. Mostrar o Dashboard.
+6. Criar ou editar uma area.
+7. Criar um processo raiz.
+8. Criar um subprocesso vinculado.
+9. Abrir o Process Explorer.
+10. Mover um card entre status.
+11. Abrir o drawer de detalhes.
+12. Destacar isolamento multi-tenant e validacoes do backend.
+
+## 16. Qualidade
+
+Comandos de validacao:
 
 ```bash
 cd backend
@@ -257,18 +302,28 @@ npm run lint
 npm run build
 ```
 
-## 16. Evolucoes futuras
+## 17. Decisoes tecnicas
 
-- Convites de usuarios para workspace.
-- Controle de permissoes por papel.
+- **REST em vez de GraphQL:** suficiente para o escopo e mais simples de demonstrar.
+- **JWT stateless:** facilita separacao entre frontend e backend.
+- **Prisma:** reduz boilerplate e deixa o modelo relacional explicito.
+- **Lista de adjacencia para processos:** permite hierarquia flexivel.
+- **Frontend separado:** aproxima o projeto de um deploy full stack real.
+- **Tailwind CSS:** velocidade para criar uma interface SaaS consistente.
+
+## 18. Evolucoes futuras
+
+- Convite de usuarios para workspace.
+- Controle de acesso por papel.
 - Recuperacao de senha.
 - Refresh token.
-- Auditoria de alteracoes.
-- Upload de documentos.
 - Busca global.
 - Filtros avancados.
-- Testes automatizados de API e frontend.
+- Historico de alteracoes.
+- Upload de documentos.
+- Comentarios nos processos.
+- Testes automatizados.
 
 ## Fechamento
 
-ProcessHub entrega uma base profissional de produto SaaS: autenticacao, isolamento multi-tenant, CRUD completo, hierarquia recursiva de processos, UX corporativa e deploy full stack em cloud.
+ProcessHub demonstra uma base solida de produto SaaS: autenticacao, multi-tenancy, CRUD completo, arvore recursiva, dashboard, pipeline operacional e separacao entre frontend, backend e banco de dados.
