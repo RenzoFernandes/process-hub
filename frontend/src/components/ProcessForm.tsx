@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { ChevronDown, Plus, Save } from "lucide-react";
+import { Plus, Save, X } from "lucide-react";
 import { api } from "../services/api";
 import type { ProcessNode } from "../types/process";
 
@@ -20,7 +20,7 @@ export function ProcessForm({
   initialAreaId,
   onProcessCreated,
 }: ProcessFormProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("open");
@@ -31,6 +31,24 @@ export function ProcessForm({
   const [documentation, setDocumentation] = useState("");
   const [areaId, setAreaId] = useState(initialAreaId || "");
   const [parentId, setParentId] = useState("");
+
+  const resetForm = useCallback(() => {
+    setName("");
+    setDescription("");
+    setStatus("open");
+    setPriority("medium");
+    setExecutionType("manual");
+    setTools("");
+    setResponsibles("");
+    setDocumentation("");
+    setAreaId(initialAreaId || "");
+    setParentId("");
+  }, [initialAreaId]);
+
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    resetForm();
+  }, [resetForm]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -48,19 +66,23 @@ export function ProcessForm({
       parentId: parentId || null,
     });
 
-    setName("");
-    setDescription("");
-    setStatus("open");
-    setPriority("medium");
-    setExecutionType("manual");
-    setTools("");
-    setResponsibles("");
-    setDocumentation("");
-    setAreaId(initialAreaId || "");
-    setParentId("");
-
     onProcessCreated();
+    handleClose();
   }
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        handleClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleClose, isOpen]);
 
   const allProcesses = flattenProcesses(processes);
   const inputClass =
@@ -68,175 +90,195 @@ export function ProcessForm({
   const labelClass = "text-xs font-semibold uppercase tracking-wide text-slate-500";
 
   return (
-    <section className="mb-4 rounded-lg border border-slate-200 bg-white shadow-sm">
+    <>
       <button
         type="button"
-        onClick={() => setIsExpanded((current) => !current)}
-        className="flex w-full items-center justify-between gap-4 p-3 text-left transition hover:bg-slate-50 sm:px-4"
+        onClick={() => setIsOpen(true)}
+        className="mb-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 sm:w-auto"
       >
-        <span className="flex min-w-0 items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-700">
-            <Plus size={19} />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-base font-semibold text-slate-950">
-              Cadastrar processo
-            </span>
-            <span className="mt-0.5 block text-sm leading-5 text-slate-500">
-              Abra o formulario para adicionar processos raiz ou subprocessos.
-            </span>
-          </span>
-        </span>
-
-        <ChevronDown
-          className={`shrink-0 text-slate-400 transition duration-200 ${
-            isExpanded ? "rotate-180" : ""
-          }`}
-          size={20}
-        />
+        <Plus size={18} />
+        Cadastrar processo
       </button>
 
-      {isExpanded && (
-        <form
-          onSubmit={handleSubmit}
-          className="border-t border-slate-200 p-4 sm:p-5"
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              handleClose();
+            }
+          }}
         >
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="flex flex-col gap-1.5">
-              <span className={labelClass}>Nome</span>
-              <input
-                className={inputClass}
-                placeholder="Ex.: Recrutamento e selecao"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                required
-              />
-            </label>
+          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-lg border border-slate-200 bg-white p-4 shadow-2xl sm:p-6">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-950">
+                  Cadastrar processo
+                </h2>
+                <p className="mt-1 text-sm leading-5 text-slate-500">
+                  Adicione processos raiz ou subprocessos vinculados a uma area.
+                </p>
+              </div>
 
-            <label className="flex flex-col gap-1.5">
-              <span className={labelClass}>Area</span>
-              <select
-                className={inputClass}
-                value={areaId}
-                onChange={(event) => setAreaId(event.target.value)}
-                required
+              <button
+                type="button"
+                onClick={handleClose}
+                className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-950"
+                title="Fechar"
               >
-                <option value="">Selecione uma area</option>
-                {areas.map((area) => (
-                  <option key={area.id} value={area.id}>
-                    {area.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <X size={18} />
+              </button>
+            </div>
 
-            <label className="flex flex-col gap-1.5">
-              <span className={labelClass}>Processo pai</span>
-              <select
-                className={inputClass}
-                value={parentId}
-                onChange={(event) => setParentId(event.target.value)}
-              >
-                <option value="">Processo raiz</option>
-                {allProcesses.map((process) => (
-                  <option key={process.id} value={process.id}>
-                    {process.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <form onSubmit={handleSubmit}>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="flex flex-col gap-1.5">
+                  <span className={labelClass}>Nome</span>
+                  <input
+                    className={inputClass}
+                    placeholder="Ex.: Recrutamento e selecao"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    required
+                  />
+                </label>
 
-            <label className="flex flex-col gap-1.5">
-              <span className={labelClass}>Status</span>
-              <select
-                className={inputClass}
-                value={status}
-                onChange={(event) => setStatus(event.target.value)}
-              >
-                <option value="open">Aberto</option>
-                <option value="in_progress">Em Andamento</option>
-                <option value="review">Em Revisao</option>
-                <option value="closed">Concluido</option>
-              </select>
-            </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className={labelClass}>Area</span>
+                  <select
+                    className={inputClass}
+                    value={areaId}
+                    onChange={(event) => setAreaId(event.target.value)}
+                    required
+                  >
+                    <option value="">Selecione uma area</option>
+                    {areas.map((area) => (
+                      <option key={area.id} value={area.id}>
+                        {area.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-            <label className="flex flex-col gap-1.5">
-              <span className={labelClass}>Prioridade</span>
-              <select
-                className={inputClass}
-                value={priority}
-                onChange={(event) => setPriority(event.target.value)}
-              >
-                <option value="low">Baixa</option>
-                <option value="medium">Media</option>
-                <option value="high">Alta</option>
-                <option value="critical">Critica</option>
-              </select>
-            </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className={labelClass}>Processo pai</span>
+                  <select
+                    className={inputClass}
+                    value={parentId}
+                    onChange={(event) => setParentId(event.target.value)}
+                  >
+                    <option value="">Processo raiz</option>
+                    {allProcesses.map((process) => (
+                      <option key={process.id} value={process.id}>
+                        {process.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-            <label className="flex flex-col gap-1.5">
-              <span className={labelClass}>Tipo</span>
-              <select
-                className={inputClass}
-                value={executionType}
-                onChange={(event) => setExecutionType(event.target.value)}
-              >
-                <option value="manual">Manual</option>
-                <option value="system">Sistemico</option>
-                <option value="hybrid">Hibrido</option>
-              </select>
-            </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className={labelClass}>Status</span>
+                  <select
+                    className={inputClass}
+                    value={status}
+                    onChange={(event) => setStatus(event.target.value)}
+                  >
+                    <option value="open">Aberto</option>
+                    <option value="in_progress">Em Andamento</option>
+                    <option value="review">Em Revisao</option>
+                    <option value="closed">Concluido</option>
+                  </select>
+                </label>
 
-            <label className="flex flex-col gap-1.5">
-              <span className={labelClass}>Ferramentas</span>
-              <input
-                className={inputClass}
-                placeholder="Ex.: Trello, Notion, ERP"
-                value={tools}
-                onChange={(event) => setTools(event.target.value)}
-              />
-            </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className={labelClass}>Prioridade</span>
+                  <select
+                    className={inputClass}
+                    value={priority}
+                    onChange={(event) => setPriority(event.target.value)}
+                  >
+                    <option value="low">Baixa</option>
+                    <option value="medium">Media</option>
+                    <option value="high">Alta</option>
+                    <option value="critical">Critica</option>
+                  </select>
+                </label>
 
-            <label className="flex flex-col gap-1.5">
-              <span className={labelClass}>Responsaveis</span>
-              <input
-                className={inputClass}
-                placeholder="Ex.: RH e gestores"
-                value={responsibles}
-                onChange={(event) => setResponsibles(event.target.value)}
-              />
-            </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className={labelClass}>Tipo</span>
+                  <select
+                    className={inputClass}
+                    value={executionType}
+                    onChange={(event) => setExecutionType(event.target.value)}
+                  >
+                    <option value="manual">Manual</option>
+                    <option value="system">Sistemico</option>
+                    <option value="hybrid">Hibrido</option>
+                  </select>
+                </label>
 
-            <label className="flex flex-col gap-1.5 md:col-span-2">
-              <span className={labelClass}>Descricao</span>
-              <textarea
-                className={inputClass}
-                placeholder="Explique o objetivo, entradas, saidas e pontos importantes do processo."
-                rows={3}
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-              />
-            </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className={labelClass}>Ferramentas</span>
+                  <input
+                    className={inputClass}
+                    placeholder="Ex.: Trello, Notion, ERP"
+                    value={tools}
+                    onChange={(event) => setTools(event.target.value)}
+                  />
+                </label>
 
-            <label className="flex flex-col gap-1.5 md:col-span-2">
-              <span className={labelClass}>Documentacao associada</span>
-              <textarea
-                className={inputClass}
-                placeholder="Ex.: link do procedimento, politica interna, checklist ou guia operacional."
-                rows={2}
-                value={documentation}
-                onChange={(event) => setDocumentation(event.target.value)}
-              />
-            </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className={labelClass}>Responsaveis</span>
+                  <input
+                    className={inputClass}
+                    placeholder="Ex.: RH e gestores"
+                    value={responsibles}
+                    onChange={(event) => setResponsibles(event.target.value)}
+                  />
+                </label>
+
+                <label className="flex flex-col gap-1.5 md:col-span-2">
+                  <span className={labelClass}>Descricao</span>
+                  <textarea
+                    className={inputClass}
+                    placeholder="Explique o objetivo, entradas, saidas e pontos importantes do processo."
+                    rows={3}
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                  />
+                </label>
+
+                <label className="flex flex-col gap-1.5 md:col-span-2">
+                  <span className={labelClass}>Documentacao associada</span>
+                  <textarea
+                    className={inputClass}
+                    placeholder="Ex.: link do procedimento, politica interna, checklist ou guia operacional."
+                    rows={2}
+                    value={documentation}
+                    onChange={(event) => setDocumentation(event.target.value)}
+                  />
+                </label>
+              </div>
+
+              <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Cancelar
+                </button>
+
+                <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700">
+                  <Save size={17} />
+                  Salvar processo
+                </button>
+              </div>
+            </form>
           </div>
-
-          <button className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 sm:w-auto">
-            <Save size={17} />
-            Salvar processo
-          </button>
-        </form>
+        </div>
       )}
-    </section>
+    </>
   );
 }
 
